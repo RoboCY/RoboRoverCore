@@ -10,10 +10,8 @@ Open-source firmware, libraries, and example projects for the **Kypruino UNO+ v0
 - [Quick start](#quick-start)
 - [Pin map (Kypruino ↔ RoboRover Core)](#pin-map-kypruino--roborover-core)
 - [Example projects](#example-projects)
-- [Repository structure](#repository-structure)
 - [Development notes](#development-notes)
 - [Contributing](#contributing)
-- [License](#license)
 
 ---
 
@@ -112,38 +110,6 @@ A practical set of projects maintained in this repo includes:
 
 ---
 
-## Repository structure
-
-A suggested layout (used by this repo):
-
-```
-.
-├─ README.md
-├─ LICENSE
-├─ docs/
-│  ├─ pinmap.md
-│  ├─ assembly.md
-│  └─ troubleshooting.md
-├─ lib/
-│  ├─ RoboRoverCore/          # Core robot HAL + drivers (motors, sensors, expander)
-│  ├─ KypruinoIO/             # Kypruino onboard peripherals helpers (LEDs, buzzer, buttons)
-│  └─ Utilities/              # Filters, PID helpers, smoothing, timing utilities
-├─ examples/
-│  ├─ 01_HelloRobot/
-│  ├─ 02_SensorsReading/
-│  ├─ 03_LineFollower_Basic/
-│  ├─ 04_LineFollower_PID/
-│  ├─ 05_UltrasonicAvoidance/
-│  ├─ 06_LightFollower/
-│  ├─ 07_IR_Remote_Control/
-│  ├─ 08_WiFi_TeleOp/
-│  ├─ 09_OLED_Dashboard/
-│  └─ 10_SoundAndLightShow/
-└─ platformio.ini             # PlatformIO configuration (if using PlatformIO)
-```
-
----
-
 ## Development notes
 
 ### Educational design goals
@@ -163,8 +129,3 @@ Contributions are welcome:
 - Driver improvements and performance tuning (encoders, PID, filtering)
 
 Please open an issue first for major changes.
-
----
-
-## License
-Add your preferred license here (e.g., MIT / Apache-2.0 / GPL-3.0) and keep it consistent with any bundled third‑party libraries.
