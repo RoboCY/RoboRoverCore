@@ -1,131 +1,203 @@
-# Kypruino RoboRover Core — Official Code Repository
+# RoboRover Core (v1.1) — Kypruino-Powered Educational Robot Base
 
-Open-source firmware, libraries, and example projects for the **Kypruino UNO+ v0.6.2+** controller and the **RoboRover Core** educational robot base. This repo is designed for fast onboarding (plug, upload, learn) and a clean path from beginner projects to more advanced robotics (encoders, PID, sensor fusion, telemetry).
+RoboRover Core is an educational, Arduino-compatible robot platform built around **Kypruino UNO+ (v0.8.0+)** and a **RoboRover Core PCB chassis (v1.1)**. It combines motors, sensing, feedback, power, and expansion into a compact, hackable robot base for STEM learning, university labs, and maker projects.
 
----
-
-## Table of Contents
-- [What this repo includes](#what-this-repo-includes)
-- [Hardware overview](#hardware-overview)
-- [Quick start](#quick-start)
-- [Pin map (Kypruino ↔ RoboRover Core)](#pin-map-kypruino--roborover-core)
-- [Example projects](#example-projects)
-- [Development notes](#development-notes)
-- [Contributing](#contributing)
+This repository contains:
+- **Verified pinout & hardware definition (RoboRover Core v1.1)**
+- **10+ example projects** (Arduino `.ino` sketches) that progressively teach robotics fundamentals
 
 ---
 
-## What this repo includes
-- **Drivers / libraries** for RoboRover Core subsystems (motors, encoders, line sensors, ultrasonic, IR, OLED, Wi‑Fi port, I/O expander).
-- **Ready-to-run example projects** with extension ideas.
-- **Teacher-friendly exercises** that map code → hardware → observable behavior (OLED, LEDs, buzzer).
-- **PlatformIO + Arduino IDE compatibility** for a smooth classroom and maker workflow.
+## Highlights
+
+- **Drive:** 2× N20 micro metal gear motors + dual H-bridge (DRV8836 in PHASE/ENABLE mode)
+- **Sensing:** Ultrasonic distance, IR obstacle sensors, 3× line sensors, 2× LDR light sensors, IR remote receiver, wheel encoders
+- **Feedback:** 0.91" I²C OLED, NeoPixels, buzzer, pushbuttons (Kypruino onboard)
+- **Power:** Single 18650 Li-ion with **USB-C** charging & protection on-board
+- **Expandability:** Breadboard/prototyping area + I²C/UART/GPIO access
 
 ---
 
-## Hardware overview
+## Getting Started
 
-### Kypruino UNO+ v0.6.2+
-Arduino UNO R3–compatible board with built-in learning helpers (RGB LEDs / NeoPixels, buzzer, buttons, I²C ports, OLED port, Wi‑Fi module port).
+### 1) Requirements
+- Arduino IDE **or** PlatformIO
+- Board selection (Arduino IDE): **Arduino UNO** (Kypruino is UNO-compatible)
+- USB-C data cable
 
-### RoboRover Core Robot Base
-A PCB-based robot chassis featuring:
-- **2× N20 micro metal gear motors** + dual motor driver
-- **Wheel encoders** (for speed/distance feedback)
-- **Ultrasonic obstacle avoidance**
-- **IR distance / line sensors** + **LDR light sensors**
-- **IR remote receiver**
-- **0.91" OLED** (I²C)
-- **Single 18650 Li‑ion** with **USB‑C charging & protection**
-- **Breadboard / prototyping area** + expansion headers
+### 2) Install libraries (Arduino Library Manager)
+Depending on the projects you compile, you may need:
+- `Wire` (built-in)
+- `Adafruit GFX Library`
+- `Adafruit SSD1306`
+- `Adafruit NeoPixel`
+- `IRremote` (TinyIRReceiver is used in the IR remote project)
 
----
-
-## Quick start
-
-### 1) Install toolchain
-Choose one:
-- **Arduino IDE** (select board: *Arduino UNO* for Kypruino UNO+ compatibility)
-- **PlatformIO** (recommended for structured projects and libraries)
-
-### 2) USB driver (if needed)
-Kypruino uses a USB‑UART bridge (CP2102). Install the driver if your PC does not detect the board.
-
-### 3) Connect & upload
-1. Connect Kypruino to your PC using a **USB‑C data cable**.
-2. Open an example under `examples/`.
-3. Build & upload.
-4. Follow the Serial Monitor / OLED output (depending on the example).
+### 3) Upload a first sketch
+Start with:
+- `projects/01_HelloRobot/01_HelloRobot.ino`
 
 ---
 
-## Pin map (Kypruino ↔ RoboRover Core)
+## Repo Structure (recommended)
 
-> Pin assignments below reflect the intended Kypruino + RoboRover Core wiring and the robot schematic. RoboRover Core uses a **PCF8574 I/O expander** for motor direction control and obstacle sensor inputs.
-
-### Actuators / Outputs
-| Function | Pins | Notes |
-|---|---|---|
-| Motor 1 Speed (PWM) | **D11** | Speed via PWM |
-| Motor 1 Direction | **PCF8574 P0** | Direction via I/O expander |
-| Motor 2 Speed (PWM) | **D10** | Speed via PWM |
-| Motor 2 Direction | **PCF8574 P1** | Direction via I/O expander |
-| NeoPixels / RGB LEDs (Kypruino onboard) | **D8** | State indication / animations |
-| Buzzer (Kypruino onboard) | **D9** | Tones / alerts |
-| OLED Display (0.91") | **A4 (SDA), A5 (SCL)** | I²C display |
-
-### Sensors / Inputs
-| Function | Pins | Notes |
-|---|---|---|
-| Line sensors (L/C/R) | **A0 / A1 / A2** | Analog reflectance |
-| Light sensors (L/R LDR) | **A6 / A7** | Light follow/avoid |
-| Wheel encoder (Right) | **D2 (INT0)** | Interrupt input |
-| Wheel encoder (Left) | **D3 (INT1)** | Interrupt input |
-| Ultrasonic TRIG / ECHO | **D4 / D5** | Time-of-flight |
-| Obstacle sensors (L/R) | **PCF8574 P2 / P3** | Digital via expander |
-| IR remote receiver | **A3 (digital input)** | IR protocol decoding |
-
-### Connectivity
-| Function | Pins | Notes |
-|---|---|---|
-| Wi‑Fi module port (ESP8266‑style) | **D12 / D13** | Remote control + telemetry |
-
-### Important note on shared pins
-Some Kypruino onboard features can overlap with robot functions depending on mode/firmware strategy. Examples in this repo avoid conflicts by design, and advanced examples document any remaps/constraints.
+```text
+.
+├── README.md
+├── docs
+│   ├── RoboRover_Pinout_Hardware_Definition.md
+│   └── (optional) schematics, board renders, BOM notes
+└── projects
+    ├── 01_HelloRobot
+    ├── 02_SoundLightShow
+    ├── 03_OLEDStatusDashboard
+    ├── 04_ObstacleAvoidanceIR
+    ├── 05_TargetDistanceUltrasonic
+    ├── 06_LightSeeker
+    ├── 07_IRRemoteControl
+    ├── 08_Encoders_COMING_SOON
+    ├── 09_LineFollower
+    └── 10_EnhancedLineFollower_COMING_SOON
+```
 
 ---
 
-## Example projects
-A practical set of projects maintained in this repo includes:
-1. Hello Robot (static motor patterns)
-2. Sensors Reading (serial/OLED)
-3. Line Follower (basic → PID)
-4. Ultrasonic Obstacle Avoidance
-5. Light‑Seeker / Light‑Avoider
-6. IR Remote‑Controlled Rover
-7. Wi‑Fi Tele‑Op (phone/PC control)
-8. OLED Status Dashboard (battery, speed, sensors)
-9. Edge Guard (table‑edge detection)
-10. Sound & Light Show (RGB + buzzer)
+## RoboRover Core v1.1 — Pinout (Verified)
+
+### Motors (DRV8836, PHASE/ENABLE mode)
+| Function | Pin |
+|---|---|
+| Left motor PWM (ENABLE) | `D11` |
+| Right motor PWM (ENABLE) | `D10` |
+| Left motor DIR (PHASE) | `PCF8574 P0` (I²C `0x20`) |
+| Right motor DIR (PHASE) | `PCF8574 P1` (I²C `0x20`) |
+
+**Direction mapping used by the example code**
+- Forward: `P0=0, P1=0`
+- Backward: `P0=1, P1=1`
+- Spin Right: `P0=1, P1=0`
+- Spin Left: `P0=0, P1=1`
+
+### Ultrasonic (HC-SR04 class)
+- `TRIG = D4`
+- `ECHO = D5`
+
+### Line Sensors (Analog reflectance)
+- Left: `A0`
+- Center: `A1`
+- Right: `A2`
+
+### Light Sensors (LDR, analog)
+- Left: `A6`
+- Right: `A7`  
+Note: `A6/A7` are **analog-only** on UNO-class MCUs.
+
+### IR Remote Receiver
+- `A3` (used as digital input)
+
+### Wheel Encoders
+- Right encoder: `D2` (INT0)
+- Left encoder: `D3` (INT1)
+
+### I²C Bus + Devices
+- SDA: `A4`
+- SCL: `A5`
+- PCF8574 I/O expander: typical address `0x20`
+- SSD1306 OLED: typical address `0x3C`
+
+### Obstacle IR Sensors (Digital via PCF8574)
+- Left obstacle: `PCF8574 P2`
+- Right obstacle: `PCF8574 P3`
+
+**PCF8574 note (important):** it is quasi-bidirectional. For input bits (e.g., `P2/P3`), firmware should keep them written HIGH (“released”) before reading.
 
 ---
 
-## Development notes
+## Pin Sharing Notes (Kypruino onboard features vs RoboRover hardware)
 
-### Educational design goals
-- Make every example **observable**: use OLED / LEDs / buzzer for feedback, not only Serial.
-- Keep a consistent API style across modules (motors, sensors, UI).
-- Include “extension ideas” per project so students can iterate beyond the baseline.
+Kypruino UNO+ includes onboard buttons/LEDs/buzzer/NeoPixels on fixed pins. Some pins can overlap with robot functions depending on how you use the system. Practical guidance:
 
-### Electrical / safety
-- RoboRover Core uses a **single 18650 Li‑ion** with **USB‑C charge/protection**; follow standard Li‑ion handling practices and do not short the cell or bypass protection circuitry.
+- If you use **Ultrasonic** (`D4/D5`), avoid using Kypruino button functions that rely on `D4`.
+- If you use **Encoders** (`D2/D3`), avoid using Kypruino button functions that rely on `D2`.
+- NeoPixels (`D8`) and buzzer (`D9`) are dedicated onboard peripherals (used in multiple demo projects).
+
+---
+
+## Example Projects
+
+All projects are written for Arduino IDE / PlatformIO and target Kypruino UNO+ + RoboRover Core v1.1.
+
+### 01 — Hello Robot! (motor patterns)
+**File:** `01_HelloRobot.ino`  
+A first motor test: forward, stop, backward, stop, spin right/left.  
+Concepts: PWM speed control, direction via I²C expander, timing-based motion.
+
+### 02 — Sound & Light Show (button triggered)
+**File:** `02_SoundLightShow.ino`  
+Press Kypruino onboard buttons to trigger LED + buzzer animations (police, chase, random, rainbow).  
+Concepts: digital inputs with pullups, simple UI triggers, NeoPixel basics, tones.
+
+### 03 — OLED Status Dashboard (live sensors)
+**File:** `03_OLEDStatusDashboard.ino`  
+Live “graph dashboard” on the OLED + Serial Monitor output: ultrasonic distance, line sensors, LDR bars, obstacle states.  
+Concepts: I²C peripherals, visualization, sensor sampling, simple telemetry.
+
+### 04 — Obstacle Avoidance (IR obstacle sensors)
+**File:** `04_ObstacleAvoidanceIR.ino`  
+Drives forward until an obstacle is detected (left has priority), then reverses and spins away.  
+Concepts: reactive autonomy, digital sensing via expander, behavior rules.
+
+### 05 — Target Distance Control (ultrasonic)
+**File:** `05_TargetDistanceUltrasonic.ino`  
+Maintains a target distance using deadband control: forward/back/stop to hold spacing.  
+Concepts: time-of-flight measurement, threshold + deadband, simple closed-loop behavior.
+
+### 06 — Light Seeker (LDR differential)
+**File:** `06_LightSeeker.ino`  
+Spins to face the brighter light source using two LDRs (left/right).  
+Concepts: analog sensing, differential control, deadband, proportional intuition.
+
+### 07 — IR Remote Control (NEC)
+**File:** `07_IRRemoteControl.ino`  
+Drive RoboRover with a standard IR remote. Arrow keys move while held; number keys set LED modes; beeps for feedback.  
+Concepts: IR decoding, command mapping, stateful motor commands, UI control without a PC.
+
+### 08 — Encoders (COMING SOON)
+**Status:** Coming soon  
+Planned focus: wheel encoder interrupts, RPM estimation, distance, and straight-line correction.
+
+### 09 — Line Follower (3-sensor state table + calibration)
+**File:** `09_LineFollower.ino`  
+3-IR line follower that self-calibrates thresholds (spin sampling) then follows using a simple decision table.  
+Concepts: calibration, thresholding, state logic, recovery behavior when line is lost.
+
+### 10 — Enhanced Line Following (COMING SOON)
+**Status:** Coming soon  
+Planned focus: improved line tracking (e.g., weighted error / PID), smoother turns, better intersections handling.
+
+---
+
+## Troubleshooting
+
+- **OLED not found:** confirm I²C address (`0x3C` typical), wiring, and that no other sketch is holding the bus.
+- **Obstacle sensors inverted:** some modules output inverted logic. Add a software invert flag (or flip the condition).
+- **IR remote issues:** confirm you are using a common NEC remote and the IR receiver is on `A3`.
+- **Motors swapped:** if your robot turns the wrong way, swap left/right in software (or swap motor connectors) and keep the pinout consistent.
 
 ---
 
 ## Contributing
-Contributions are welcome:
-- Bug reports (include board revision, wiring notes, and reproduction steps)
-- New example projects with clear learning outcomes
-- Driver improvements and performance tuning (encoders, PID, filtering)
 
-Please open an issue first for major changes.
+PRs are welcome, especially for:
+- Additional lessons (PID speed control, odometry, wall following, sensor fusion)
+
+Please keep changes:
+- Well-commented for educational use
+- Hardware-accurate for RoboRover Core v1.1
+
+---
+
+## Links / Support
+
+- For workshops, education programs, and support: `support@robo.com.cy`
+- For issues/bugs: open a GitHub Issue in this repo
