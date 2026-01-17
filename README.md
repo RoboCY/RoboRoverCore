@@ -37,6 +37,10 @@ Depending on the projects you compile, you may need:
 Start with:
 - `projects/01_HelloRobot/01_HelloRobot.ino`
 
+### 4) Open the interactive manual (tablet or PC)
+Use RoboRover Lab Explorer for onboarding, reference, and project navigation:
+- https://roborovercore.apps.robo.com.cy/
+
 ---
 
 ## Repo Structure (recommended)
@@ -177,6 +181,14 @@ Planned focus: improved line tracking (e.g., weighted error / PID), smoother tur
 
 ---
 
+## RoboRover Lab Explorer (Interactive Web Manual)
+
+RoboRover Lab Explorer is the official interactive web manual for RoboRover Core. It provides guided onboarding, pin mappings, live reference material, and project navigation.
+
+**Important:** Lab Explorer is designed for **tablet or PC** (recommended). Open it in a modern browser:
+
+- https://roborovercore.apps.robo.com.cy/
+
 ## Troubleshooting
 
 - **OLED not found:** confirm I²C address (`0x3C` typical), wiring, and that no other sketch is holding the bus.
@@ -192,8 +204,12 @@ PRs are welcome, especially for:
 - Additional lessons (PID speed control, odometry, wall following, sensor fusion)
 
 Please keep changes:
+- UNO-compatible (ATmega328P class constraints)
 - Well-commented for educational use
 - Hardware-accurate for RoboRover Core v1.1
+
+---
+
 
 ---
 
