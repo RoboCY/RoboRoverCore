@@ -1,6 +1,6 @@
-# RoboRover Core (v2.1) — Kypruino-Powered Educational Robot Base
+# RoboRover Core (v2.1) — Kypruino/Robo Core+-Powered Educational Robot Base
 
-RoboRover Core is an educational, Arduino-compatible robot platform built around **Kypruino UNO+ (v0.8.0+)** and a **RoboRover Core PCB chassis (v2.1)**. It combines motors, sensing, feedback, power, and expansion into a compact, hackable robot base for STEM learning, university labs, and maker projects.
+RoboRover Core is an educational, Arduino-compatible robot platform built around **Kypruino/Robo Core+ UNO+ (v0.8.0+)** and a **RoboRover Core PCB chassis (v2.1)**. It combines motors, sensing, feedback, power, and expansion into a compact, hackable robot base for STEM learning, university labs, and maker projects.
 
 **v2.1** keeps the full v1.1 project set and pinout philosophy, but upgrades the sensing and power platform:
 - **Line sensing moves to a dedicated 12-bit I²C ADC** (TLA2528) and grows from **3 → 5 reflectance sensors**, freeing the controller's `A0/A1/A2` analog pins.
@@ -18,7 +18,7 @@ This repository contains:
 
 - **Drive:** 2× N20 micro metal gear motors + dual H-bridge (DRV8836 in PHASE/ENABLE mode)
 - **Sensing:** Ultrasonic distance, IR obstacle sensors, **5× line sensors (via I²C ADC)**, 2× LDR light sensors, IR remote receiver, wheel encoders, **3-axis accelerometer (new)**
-- **Feedback:** 0.91" I²C OLED, NeoPixels, buzzer, pushbuttons (Kypruino onboard)
+- **Feedback:** 0.91" I²C OLED, NeoPixels, buzzer, pushbuttons (Kypruino/Robo Core+ onboard)
 - **Power:** Single 18650 Li-ion with **USB-C** charging & protection on-board, plus a **battery fuel gauge (new)**
 - **Expandability:** Breadboard/prototyping area + I²C/UART/GPIO access + **3 spare ADC analog inputs (new)**
 
@@ -28,7 +28,7 @@ This repository contains:
 
 ### 1) Requirements
 - Arduino IDE **or** PlatformIO
-- Board selection (Arduino IDE): **Arduino UNO** (Kypruino is UNO-compatible)
+- Board selection (Arduino IDE): **Arduino UNO** (Kypruino/Robo Core+ is UNO-compatible)
 - USB-C data cable
 
 ### 2) Install libraries (Arduino Library Manager)
@@ -160,12 +160,12 @@ Note: `A6/A7` are **analog-only** on UNO-class MCUs.
 
 ---
 
-## Pin Sharing Notes (Kypruino onboard features vs RoboRover hardware)
+## Pin Sharing Notes (Kypruino/Robo Core+ onboard features vs RoboRover hardware)
 
-Kypruino UNO+ includes onboard buttons/LEDs/buzzer/NeoPixels on fixed pins. Some pins can overlap with robot functions depending on how you use the system. Practical guidance:
+Kypruino/Robo Core+ UNO+ includes onboard buttons/LEDs/buzzer/NeoPixels on fixed pins. Some pins can overlap with robot functions depending on how you use the system. Practical guidance:
 
-- If you use **Ultrasonic** (`D4/D5`), avoid using Kypruino button functions that rely on `D4`.
-- If you use **Encoders** (`D2/D3`), avoid using Kypruino button functions that rely on `D2`.
+- If you use **Ultrasonic** (`D4/D5`), avoid using Kypruino/Robo Core+ button functions that rely on `D4`.
+- If you use **Encoders** (`D2/D3`), avoid using Kypruino/Robo Core+ button functions that rely on `D2`.
 - NeoPixels (`D8`) and buzzer (`D9`) are dedicated onboard peripherals (used in multiple demo projects).
 - **New in v2.1 — good news:** because line sensing moved to the I²C ADC, the analog pins `A0/A1/A2` are **free** for your own analog sensors/experiments.
 
@@ -173,7 +173,7 @@ Kypruino UNO+ includes onboard buttons/LEDs/buzzer/NeoPixels on fixed pins. Some
 
 ## Example Projects
 
-All projects are written for Arduino IDE / PlatformIO and target Kypruino UNO+ + RoboRover Core v2.1. They mirror the v1.1 lessons; the projects that touch line sensing now read the **I²C ADC** instead of `A0/A1/A2`.
+All projects are written for Arduino IDE / PlatformIO and target Kypruino/Robo Core+ UNO+ + RoboRover Core v2.1. They mirror the v1.1 lessons; the projects that touch line sensing now read the **I²C ADC** instead of `A0/A1/A2`.
 
 ### 01 — Hello Robot! (motor patterns)
 **File:** `01_HelloRobot.ino`  
@@ -183,7 +183,7 @@ Concepts: PWM speed control, direction via I²C expander, timing-based motion.
 
 ### 02 — Sound & Light Show (button triggered)
 **File:** `02_SoundLightShow.ino`  
-Press Kypruino onboard buttons to trigger LED + buzzer animations (police, chase, random, rainbow).  
+Press Kypruino/Robo Core+ onboard buttons to trigger LED + buzzer animations (police, chase, random, rainbow).  
 Concepts: digital inputs with pullups, simple UI triggers, NeoPixel basics, tones.  
 *v2.1: identical to v1.1.*
 

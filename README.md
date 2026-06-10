@@ -6,7 +6,7 @@
 
 ## What is this?
 
-**RoboRover Core** is a compact, hackable robot base built for STEM learning, university labs, and anyone who enjoys tinkering with hardware. It pairs a custom **Kypruino UNO+** microcontroller board with a purpose-built PCB chassis packed with sensors, NeoPixels, a buzzer, an OLED screen, and two peppy N20 micro-motors.
+**RoboRover Core** is a compact, hackable robot base built for STEM learning, university labs, and anyone who enjoys tinkering with hardware. It pairs a custom **Kypruino/Robo Core+ UNO+** microcontroller board with a purpose-built PCB chassis packed with sensors, NeoPixels, a buzzer, an OLED screen, and two peppy N20 micro-motors.
 
 This repo holds all the example sketches — organised by hardware version — so you can go from *"blink an LED"* to *"autonomous line-following robot"* one project at a time.
 
@@ -69,7 +69,7 @@ Both versions run on an **Arduino UNO-compatible** toolchain — no exotic setup
 - A RoboRover Core robot 🤖
 
 ### 2. Board setup
-Select **Arduino UNO** in the board manager — Kypruino UNO+ is fully UNO-compatible.
+Select **Arduino UNO** in the board manager — Kypruino/Robo Core+ UNO+ is fully UNO-compatible.
 
 ### 3. Install libraries
 Open Library Manager and grab these (only install what the sketch needs):
@@ -140,4 +140,4 @@ Sketches in this repository are released for educational use. See individual ske
 
 ---
 
-*Built with ☕ and solder fumes by the RoboRover team.*
+*Built with ❤️, ☕, and solder fumes by the [robo.com.cy](https://robo.com.cy) team.*
