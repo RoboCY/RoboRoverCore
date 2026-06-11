@@ -59,9 +59,10 @@ Use RoboRover Lab Explorer for onboarding, reference, and project navigation:
     ├── 05_TargetDistanceUltrasonic
     ├── 06_LightSeeker
     ├── 07_IRRemoteControl
-    ├── 08_Encoders_COMING_SOON
+    ├── 08_LineFollowerEdge
     ├── 09_LineFollower
-    └── 10_EnhancedLineFollower_COMING_SOON
+    ├── 10_LineFollowerEnhanced
+    └── 11_WiFiCommandCenter
 ```
 
 ---
@@ -166,18 +167,16 @@ Concepts: analog sensing, differential control, deadband, proportional intuition
 Drive RoboRover with a standard IR remote. Arrow keys move while held; number keys set LED modes; beeps for feedback.  
 Concepts: IR decoding, command mapping, stateful motor commands, UI control without a PC.
 
-### 08 — Encoders (COMING SOON)
-**Status:** Coming soon  
-Planned focus: wheel encoder interrupts, RPM estimation, distance, and straight-line correction.
+### 08 — Line Follower Edge
+**File:** `08_LineFollowerEdge.ino`
 
 ### 09 — Line Follower (3-sensor state table + calibration)
 **File:** `09_LineFollower.ino`  
 3-IR line follower that self-calibrates thresholds (spin sampling) then follows using a simple decision table.  
 Concepts: calibration, thresholding, state logic, recovery behavior when line is lost.
 
-### 10 — Enhanced Line Following (COMING SOON)
-**Status:** Coming soon  
-Planned focus: improved line tracking (e.g., weighted error / PID), smoother turns, better intersections handling.
+### 10 — Line Follower Enhanced
+**File:** `10_LineFollowerEnhanced.ino`
 
 ---
 

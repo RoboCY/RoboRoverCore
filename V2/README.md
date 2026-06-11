@@ -71,11 +71,9 @@ Use RoboRover Lab Explorer for onboarding, reference, and project navigation:
     ├── 05_TargetDistanceUltrasonic
     ├── 06_LightSeeker
     ├── 07_IRRemoteControl
-    ├── 08_Encoders_COMING_SOON
-    ├── 09_LineFollower
-    ├── 10_EnhancedLineFollower_COMING_SOON
-    ├── 11_TiltAndMotion_COMING_SOON      # new — uses the v2.1 accelerometer
-    └── 12_BatteryMonitor_COMING_SOON     # new — uses the v2.1 fuel gauge
+    ├── 08_DashboardWithRemoteControl_2
+    ├── 09_HybridLineFollower
+    └── 10_RainbowBubbleLevelAccel
 ```
 
 ---
@@ -217,27 +215,14 @@ Drive RoboRover with a standard IR remote. Arrow keys move while held; number ke
 Concepts: IR decoding, command mapping, stateful motor commands, UI control without a PC.  
 *v2.1: identical to v1.1 — IR receiver still on `A3`.*
 
-### 08 — Encoders (COMING SOON)
-**Status:** Coming soon  
-Planned focus: wheel encoder interrupts, RPM estimation, distance, and straight-line correction.
+### 08 — Dashboard With Remote Control
+**File:** `08_DashboardWithRemoteControl_2.ino`
 
-### 09 — Line Follower (5-sensor state table + calibration)
-**File:** `09_LineFollower.ino`  
-Line follower that self-calibrates thresholds (spin sampling) then follows using a decision table.  
-Concepts: calibration, thresholding, state logic, recovery behavior when line is lost.  
-*v2.1: upgraded to **5 sensors read over I²C (TLA2528 AIN0–AIN4)** instead of 3 analog pins — wider field of view and finer positioning. The calibration step now samples the ADC channels.*
+### 09 — Hybrid Line Follower
+**File:** `09_HybridLineFollower.ino`
 
-### 10 — Enhanced Line Following (COMING SOON)
-**Status:** Coming soon  
-Planned focus: improved line tracking (e.g., weighted error / PID), smoother turns, better intersection handling — made easier by the 5-sensor 12-bit ADC.
-
-### 11 — Tilt & Motion (COMING SOON) — *new in v2.1*
-**Status:** Coming soon  
-Planned focus: read the LIS2DH12 accelerometer for tilt-based steering, bump/collision detection, and fall/lift detection.
-
-### 12 — Battery Monitor (COMING SOON) — *new in v2.1*
-**Status:** Coming soon  
-Planned focus: read the BQ27441 fuel gauge for live state-of-charge, voltage, and current; low-battery warnings on the OLED/NeoPixels.
+### 10 — Rainbow Bubble Level Accel
+**File:** `10_RainbowBubbleLevelAccel.ino`
 
 ---
 
