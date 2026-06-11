@@ -178,6 +178,11 @@ Concepts: calibration, thresholding, state logic, recovery behavior when line is
 ### 10 — Line Follower Enhanced
 **File:** `10_LineFollowerEnhanced.ino`
 
+### 11 — WiFi Command Center
+**File:** `11_WiFiCommandCenter.ino`  
+Receives line-based commands from an ESP8266 over SoftwareSerial (`D12`/`D13`) and drives motors, sensors, NeoPixels, buzzer, and OLED. Supports light modes, light-follow mode, beep, piano demo, and generic command placeholders.  
+Concepts: UART bridge, command parsing, sensor telemetry over serial, stateful actuator control.
+
 ---
 
 ## RoboRover Lab Explorer (Interactive Web Manual)
