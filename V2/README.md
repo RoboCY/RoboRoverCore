@@ -64,16 +64,16 @@ Use RoboRover Lab Explorer for onboarding, reference, and project navigation:
 │   ├── RoboRover_v2.1_Pinout_Hardware_Definition.md
 │   └── (optional) schematics, board renders, BOM notes
 └── projects
-    ├── 01_HelloRobot_V2
-    ├── 02_SoundLightShow_V2
-    ├── 03_OLEDStatusDashboard_V2
-    ├── 04_ObstacleAvoidanceIR_V2
-    ├── 05_TargetDistanceUltrasonic_V2
-    ├── 06_LightSeeker_V2
-    ├── 07_IRRemoteControl_V2
-    ├── 08_DashboardWithRemoteControl_V2
+    ├── 01_SystemIgnition_V2
+    ├── 02_CyberAudioVisuals_V2
+    ├── 03_MissionControlDashboard_V2
+    ├── 04_ReflexiveAutonomy_V2
+    ├── 05_PrecisionDistanceLock_V2
+    ├── 06_PhototropicNavigation_V2
+    ├── 07_TacticalTeleoperation_V2
+    ├── 08_CommandFusionHub_V2
     ├── 09_HybridLineFollower_V2
-    └── 10_RainbowBubbleLevelAccel_V2
+    └── 10_ChromaTiltSphere_V2
 ```
 
 ---
@@ -173,56 +173,56 @@ Kypruino/Robo Core+ UNO+ includes onboard buttons/LEDs/buzzer/NeoPixels on fixed
 
 All projects are written for Arduino IDE / PlatformIO and target Kypruino/Robo Core+ UNO+ + RoboRover Core v2.1. They mirror the v1.1 lessons; the projects that touch line sensing now read the **I²C ADC** instead of `A0/A1/A2`.
 
-### 01 — Hello Robot! (motor patterns)
-**File:** `01_HelloRobot_V2.ino`  
+### 01 — System Ignition
+**File:** `01_SystemIgnition_V2.ino`  
 A first motor test: forward, stop, backward, stop, spin right/left.  
 Concepts: PWM speed control, direction via I²C expander, timing-based motion.  
 *v2.1: identical to v1.1 — motors are unchanged.*
 
-### 02 — Sound & Light Show (button triggered)
-**File:** `02_SoundLightShow_V2.ino`  
+### 02 — Cyber Audio-Visuals
+**File:** `02_CyberAudioVisuals_V2.ino`  
 Press Kypruino/Robo Core+ onboard buttons to trigger LED + buzzer animations (police, chase, random, rainbow).  
 Concepts: digital inputs with pullups, simple UI triggers, NeoPixel basics, tones.  
 *v2.1: identical to v1.1.*
 
-### 03 — OLED Status Dashboard (live sensors)
-**File:** `03_OLEDStatusDashboard_V2.ino`  
+### 03 — Mission Control Dashboard
+**File:** `03_MissionControlDashboard_V2.ino`  
 Live “graph dashboard” on the OLED + Serial Monitor output: ultrasonic distance, line sensors, LDR bars, obstacle states.  
 Concepts: I²C peripherals, visualization, sensor sampling, simple telemetry.  
 *v2.1: line bars now read the 5-channel TLA2528 ADC; you can also add **battery %** (BQ27441) and a **tilt indicator** (LIS2DH12) to the dashboard.*
 
-### 04 — Obstacle Avoidance (IR obstacle sensors)
-**File:** `04_ObstacleAvoidanceIR_V2.ino`  
+### 04 — Reflexive Autonomy
+**File:** `04_ReflexiveAutonomy_V2.ino`  
 Drives forward until an obstacle is detected (left has priority), then reverses and spins away.  
 Concepts: reactive autonomy, digital sensing via expander, behavior rules.  
 *v2.1: identical to v1.1 — obstacle IR is still on PCF8574 `P2/P3`.*
 
-### 05 — Target Distance Control (ultrasonic)
-**File:** `05_TargetDistanceUltrasonic_V2.ino`  
+### 05 — Precision Distance Lock
+**File:** `05_PrecisionDistanceLock_V2.ino`  
 Maintains a target distance using deadband control: forward/back/stop to hold spacing.  
 Concepts: time-of-flight measurement, threshold + deadband, simple closed-loop behavior.  
 *v2.1: identical to v1.1.*
 
-### 06 — Light Seeker (LDR differential)
-**File:** `06_LightSeeker_V2.ino`  
+### 06 — Phototropic Navigation
+**File:** `06_PhototropicNavigation_V2.ino`  
 Spins to face the brighter light source using two LDRs (left/right).  
 Concepts: analog sensing, differential control, deadband, proportional intuition.  
 *v2.1: identical to v1.1 — LDRs still on `A6/A7`.*
 
-### 07 — IR Remote Control (NEC)
-**File:** `07_IRRemoteControl_V2.ino`  
+### 07 — Tactical Teleoperation
+**File:** `07_TacticalTeleoperation_V2.ino`  
 Drive RoboRover with a standard IR remote. Arrow keys move while held; number keys set LED modes; beeps for feedback.  
 Concepts: IR decoding, command mapping, stateful motor commands, UI control without a PC.  
 *v2.1: identical to v1.1 — IR receiver still on `A3`.*
 
-### 08 — Dashboard With Remote Control
-**File:** `08_DashboardWithRemoteControl_V2.ino`
+### 08 — Command Fusion Hub
+**File:** `08_CommandFusionHub_V2.ino`
 
 ### 09 — Hybrid Line Follower
 **File:** `09_HybridLineFollower_V2.ino`
 
-### 10 — Rainbow Bubble Level Accel
-**File:** `10_RainbowBubbleLevelAccel_V2.ino`
+### 10 — Chroma Tilt Sphere
+**File:** `10_ChromaTiltSphere_V2.ino`
 
 ---
 

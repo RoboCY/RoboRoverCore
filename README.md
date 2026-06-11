@@ -38,26 +38,26 @@ Both versions run on an **Arduino UNO-compatible** toolchain — no exotic setup
 
 | # | Sketch | What it does |
 |---|--------|--------------|
-| 01 | `01_HelloRobot` | First motor test — forward, back, spin. Classic. |
-| 02 | `02_SoundLightShow` | Buzzer + NeoPixels doing their thing |
-| 03 | `03_OLEDStatusDashboard` | Live sensor readings on the OLED |
-| 04 | `04_ObstacleAvoidanceIR` | IR sensors make the robot dodge obstacles |
-| 05 | `05_TargetDistanceUltrasonic` | Stop exactly N cm from a wall |
-| 06 | `06_LightSeeker` | LDR sensors guide the robot toward the light |
-| 07 | `07_IRRemoteControl` | Drive the robot with an IR remote |
-| 09 | `09_LineFollowerEdge` | Simple edge-detection line following |
-| 10 | `10_LineFollower` | Proper PD line follower |
-| 11 | `11_LineFollowerEnhanced` | Enhanced line follower with smarter logic |
-| 12 | `12_WiFiCommandCenter` | Web-based control panel over Wi-Fi |
+| 01 | `01_SystemIgnition` | First motor test — forward, back, spin. Classic. |
+| 02 | `02_CyberAudioVisuals` | Buzzer + NeoPixels doing their thing |
+| 03 | `03_MissionControlDashboard` | Live sensor readings on the OLED |
+| 04 | `04_ReflexiveAutonomy` | IR sensors make the robot dodge obstacles |
+| 05 | `05_PrecisionDistanceLock` | Stop exactly N cm from a wall |
+| 06 | `06_PhototropicNavigation` | LDR sensors guide the robot toward the light |
+| 07 | `07_TacticalTeleoperation` | Drive the robot with an IR remote |
+| 08 | `08_LineFollowerEdge` | Simple edge-detection line following |
+| 09 | `09_LineFollower` | Proper PD line follower |
+| 10 | `10_LineFollowerEnhanced` | Enhanced line follower with smarter logic |
+| 11 | `11_WirelessCommandBridge` | Web-based control panel over Wi-Fi |
 
 ### V2 — Levelled Up on PCB v2.1
 
 | # | Sketch | What it does |
 |---|--------|--------------|
 | 01–07 | *(V1 classics, v2 hardware)* | All the favourites, adapted for v2.1 pins |
-| 13 | `13_DashboardWithRemoteControl_2` | OLED dashboard + IR remote combined |
-| 14 | `14_HybridLineFollower` | 5-sensor PD line follower using I²C ADC |
-| 15 | `15_RainbowBubbleLevelAccel` | Bubble level on OLED + rainbow NeoPixels react to tilt |
+| 08 | `08_CommandFusionHub_V2` | OLED dashboard + IR remote combined |
+| 09 | `09_HybridLineFollower_V2` | 5-sensor PD line follower using I²C ADC |
+| 10 | `10_ChromaTiltSphere_V2` | Bubble level on OLED + rainbow NeoPixels react to tilt |
 
 ---
 
@@ -90,7 +90,7 @@ SparkFun BQ27441      (battery fuel gauge)
 > The RoboRover Core v2.1 support library wraps the TLA2528 ADC, accelerometer, and fuel gauge behind friendly one-liners if you'd rather skip the low-level stuff.
 
 ### 4. Flash your first sketch
-Open `V1/01_HelloRobot/01_HelloRobot.ino`, hit **Upload**, and watch the robot boogie. 🕺
+Open `V1/01_SystemIgnition/01_SystemIgnition.ino`, hit **Upload**, and watch the robot boogie.
 
 ### 5. Interactive manual
 The **RoboRover Lab Explorer** is a web app with guided project walk-throughs, pinout references, and onboarding:
@@ -105,14 +105,29 @@ RoboRoverCore/
 ├── README.md          ← you are here
 ├── V1/
 │   ├── README.md      ← full v1.1 pinout & hardware reference
-│   ├── 01_HelloRobot/
-│   ├── 02_SoundLightShow/
-│   └── ...
+│   ├── 01_SystemIgnition/
+│   ├── 02_CyberAudioVisuals/
+│   ├── 03_MissionControlDashboard/
+│   ├── 04_ReflexiveAutonomy/
+│   ├── 05_PrecisionDistanceLock/
+│   ├── 06_PhototropicNavigation/
+│   ├── 07_TacticalTeleoperation/
+│   ├── 08_LineFollowerEdge/
+│   ├── 09_LineFollower/
+│   ├── 10_LineFollowerEnhanced/
+│   └── 11_WirelessCommandBridge/
 └── V2/
     ├── README.md      ← full v2.1 pinout & hardware reference
-    ├── 01_HelloRobot_2/
-    ├── 14_HybridLineFollower/
-    └── ...
+    ├── 01_SystemIgnition_V2/
+    ├── 02_CyberAudioVisuals_V2/
+    ├── 03_MissionControlDashboard_V2/
+    ├── 04_ReflexiveAutonomy_V2/
+    ├── 05_PrecisionDistanceLock_V2/
+    ├── 06_PhototropicNavigation_V2/
+    ├── 07_TacticalTeleoperation_V2/
+    ├── 08_CommandFusionHub_V2/
+    ├── 09_HybridLineFollower_V2/
+    └── 10_ChromaTiltSphere_V2/
 ```
 
 Each sketch folder is self-contained — open the `.ino`, install the listed libraries, and upload. No monorepo magic needed.

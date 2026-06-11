@@ -52,17 +52,17 @@ Use RoboRover Lab Explorer for onboarding, reference, and project navigation:
 │   ├── RoboRover_Pinout_Hardware_Definition.md
 │   └── (optional) schematics, board renders, BOM notes
 └── projects
-    ├── 01_HelloRobot
-    ├── 02_SoundLightShow
-    ├── 03_OLEDStatusDashboard
-    ├── 04_ObstacleAvoidanceIR
-    ├── 05_TargetDistanceUltrasonic
-    ├── 06_LightSeeker
-    ├── 07_IRRemoteControl
+    ├── 01_SystemIgnition
+    ├── 02_CyberAudioVisuals
+    ├── 03_MissionControlDashboard
+    ├── 04_ReflexiveAutonomy
+    ├── 05_PrecisionDistanceLock
+    ├── 06_PhototropicNavigation
+    ├── 07_TacticalTeleoperation
     ├── 08_LineFollowerEdge
     ├── 09_LineFollower
     ├── 10_LineFollowerEnhanced
-    └── 11_WiFiCommandCenter
+    └── 11_WirelessCommandBridge
 ```
 
 ---
@@ -132,38 +132,38 @@ Kypruino/Robo Core+ UNO+ includes onboard buttons/LEDs/buzzer/NeoPixels on fixed
 
 All projects are written for Arduino IDE / PlatformIO and target Kypruino/Robo Core+ UNO+ + RoboRover Core v1.1.
 
-### 01 — Hello Robot! (motor patterns)
-**File:** `01_HelloRobot.ino`  
+### 01 — System Ignition
+**File:** `01_SystemIgnition.ino`  
 A first motor test: forward, stop, backward, stop, spin right/left.  
 Concepts: PWM speed control, direction via I²C expander, timing-based motion.
 
-### 02 — Sound & Light Show (button triggered)
-**File:** `02_SoundLightShow.ino`  
+### 02 — Cyber Audio-Visuals
+**File:** `02_CyberAudioVisuals.ino`  
 Press Kypruino/Robo Core+ onboard buttons to trigger LED + buzzer animations (police, chase, random, rainbow).  
 Concepts: digital inputs with pullups, simple UI triggers, NeoPixel basics, tones.
 
-### 03 — OLED Status Dashboard (live sensors)
-**File:** `03_OLEDStatusDashboard.ino`  
+### 03 — Mission Control Dashboard
+**File:** `03_MissionControlDashboard.ino`  
 Live “graph dashboard” on the OLED + Serial Monitor output: ultrasonic distance, line sensors, LDR bars, obstacle states.  
 Concepts: I²C peripherals, visualization, sensor sampling, simple telemetry.
 
-### 04 — Obstacle Avoidance (IR obstacle sensors)
-**File:** `04_ObstacleAvoidanceIR.ino`  
+### 04 — Reflexive Autonomy
+**File:** `04_ReflexiveAutonomy.ino`  
 Drives forward until an obstacle is detected (left has priority), then reverses and spins away.  
 Concepts: reactive autonomy, digital sensing via expander, behavior rules.
 
-### 05 — Target Distance Control (ultrasonic)
-**File:** `05_TargetDistanceUltrasonic.ino`  
+### 05 — Precision Distance Lock
+**File:** `05_PrecisionDistanceLock.ino`  
 Maintains a target distance using deadband control: forward/back/stop to hold spacing.  
 Concepts: time-of-flight measurement, threshold + deadband, simple closed-loop behavior.
 
-### 06 — Light Seeker (LDR differential)
-**File:** `06_LightSeeker.ino`  
+### 06 — Phototropic Navigation
+**File:** `06_PhototropicNavigation.ino`  
 Spins to face the brighter light source using two LDRs (left/right).  
 Concepts: analog sensing, differential control, deadband, proportional intuition.
 
-### 07 — IR Remote Control (NEC)
-**File:** `07_IRRemoteControl.ino`  
+### 07 — Tactical Teleoperation
+**File:** `07_TacticalTeleoperation.ino`  
 Drive RoboRover with a standard IR remote. Arrow keys move while held; number keys set LED modes; beeps for feedback.  
 Concepts: IR decoding, command mapping, stateful motor commands, UI control without a PC.
 
@@ -178,8 +178,8 @@ Concepts: calibration, thresholding, state logic, recovery behavior when line is
 ### 10 — Line Follower Enhanced
 **File:** `10_LineFollowerEnhanced.ino`
 
-### 11 — WiFi Command Center
-**File:** `11_WiFiCommandCenter.ino`  
+### 11 — Wireless Command Bridge
+**File:** `11_WirelessCommandBridge.ino`  
 Receives line-based commands from an ESP8266 over SoftwareSerial (`D12`/`D13`) and drives motors, sensors, NeoPixels, buzzer, and OLED. Supports light modes, light-follow mode, beep, piano demo, and generic command placeholders.  
 Concepts: UART bridge, command parsing, sensor telemetry over serial, stateful actuator control.
 
