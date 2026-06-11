@@ -1,6 +1,6 @@
-# RoboRover Core (v1.1) — Kypruino-Powered Educational Robot Base
+# RoboRover Core (v1.1) — Kypruino/Robo Core+-Powered Educational Robot Base
 
-RoboRover Core is an educational, Arduino-compatible robot platform built around **Kypruino UNO+ (v0.8.0+)** and a **RoboRover Core PCB chassis (v1.1)**. It combines motors, sensing, feedback, power, and expansion into a compact, hackable robot base for STEM learning, university labs, and maker projects.
+RoboRover Core is an educational, Arduino-compatible robot platform built around **Kypruino/Robo Core+ UNO+ (v0.8.0+)** and a **RoboRover Core PCB chassis (v1.1)**. It combines motors, sensing, feedback, power, and expansion into a compact, hackable robot base for STEM learning, university labs, and maker projects.
 
 This repository contains:
 - **Verified pinout & hardware definition (RoboRover Core v1.1)**
@@ -12,7 +12,7 @@ This repository contains:
 
 - **Drive:** 2× N20 micro metal gear motors + dual H-bridge (DRV8836 in PHASE/ENABLE mode)
 - **Sensing:** Ultrasonic distance, IR obstacle sensors, 3× line sensors, 2× LDR light sensors, IR remote receiver, wheel encoders
-- **Feedback:** 0.91" I²C OLED, NeoPixels, buzzer, pushbuttons (Kypruino onboard)
+- **Feedback:** 0.91" I²C OLED, NeoPixels, buzzer, pushbuttons (Kypruino/Robo Core+ onboard)
 - **Power:** Single 18650 Li-ion with **USB-C** charging & protection on-board
 - **Expandability:** Breadboard/prototyping area + I²C/UART/GPIO access
 
@@ -22,7 +22,7 @@ This repository contains:
 
 ### 1) Requirements
 - Arduino IDE **or** PlatformIO
-- Board selection (Arduino IDE): **Arduino UNO** (Kypruino is UNO-compatible)
+- Board selection (Arduino IDE): **Arduino UNO** (Kypruino/Robo Core+ is UNO-compatible)
 - USB-C data cable
 
 ### 2) Install libraries (Arduino Library Manager)
@@ -118,19 +118,19 @@ Note: `A6/A7` are **analog-only** on UNO-class MCUs.
 
 ---
 
-## Pin Sharing Notes (Kypruino onboard features vs RoboRover hardware)
+## Pin Sharing Notes (Kypruino/Robo Core+ onboard features vs RoboRover hardware)
 
-Kypruino UNO+ includes onboard buttons/LEDs/buzzer/NeoPixels on fixed pins. Some pins can overlap with robot functions depending on how you use the system. Practical guidance:
+Kypruino/Robo Core+ UNO+ includes onboard buttons/LEDs/buzzer/NeoPixels on fixed pins. Some pins can overlap with robot functions depending on how you use the system. Practical guidance:
 
-- If you use **Ultrasonic** (`D4/D5`), avoid using Kypruino button functions that rely on `D4`.
-- If you use **Encoders** (`D2/D3`), avoid using Kypruino button functions that rely on `D2`.
+- If you use **Ultrasonic** (`D4/D5`), avoid using Kypruino/Robo Core+ button functions that rely on `D4`.
+- If you use **Encoders** (`D2/D3`), avoid using Kypruino/Robo Core+ button functions that rely on `D2`.
 - NeoPixels (`D8`) and buzzer (`D9`) are dedicated onboard peripherals (used in multiple demo projects).
 
 ---
 
 ## Example Projects
 
-All projects are written for Arduino IDE / PlatformIO and target Kypruino UNO+ + RoboRover Core v1.1.
+All projects are written for Arduino IDE / PlatformIO and target Kypruino/Robo Core+ UNO+ + RoboRover Core v1.1.
 
 ### 01 — Hello Robot! (motor patterns)
 **File:** `01_HelloRobot.ino`  
@@ -139,7 +139,7 @@ Concepts: PWM speed control, direction via I²C expander, timing-based motion.
 
 ### 02 — Sound & Light Show (button triggered)
 **File:** `02_SoundLightShow.ino`  
-Press Kypruino onboard buttons to trigger LED + buzzer animations (police, chase, random, rainbow).  
+Press Kypruino/Robo Core+ onboard buttons to trigger LED + buzzer animations (police, chase, random, rainbow).  
 Concepts: digital inputs with pullups, simple UI triggers, NeoPixel basics, tones.
 
 ### 03 — OLED Status Dashboard (live sensors)
