@@ -14,21 +14,24 @@ This repo holds all the example sketches — organised by hardware version — s
 
 ## Hardware Versions
 
-| | V1 (PCB v1.1) | V2 (PCB v2.1) |
-|---|---|---|
-| Motors | 2× N20 via DRV8836 | Same |
-| Line sensors | 3× analog (A0–A2) | **5× via I²C TLA2528 ADC** |
-| Distance | HC-SR04 ultrasonic | Same |
-| IR obstacle | 2× sensors | Same |
-| Light sensing | 2× LDR | Same |
-| IR remote | Yes | Yes |
-| OLED display | 0.91″ I²C | Same |
-| NeoPixels | Yes | Same |
-| Accelerometer | ✗ | **LIS2DH12 (new)** |
-| Battery gauge | ✗ | **BQ27441 fuel gauge (new)** |
-| Power | 18650 Li-ion + USB-C | Same + 3.3 V rail |
+| | V1 (PCB v1.1) | V2 (PCB v2.1) | V3 (V3.1, four-layer PCB) |
+|---|---|---|---|
+| Coprocessors | ✗ | ✗ | **2× CH32: one for motors + encoders, one for sensors** |
+| Motors | 2× N20 via DRV8836 | Same | **2× DRV8837, one at each motor, 6 V boost** |
+| Wheel encoders | Read by the main board | Same | **Counted by the motion coprocessor, closed-loop speed and distance** |
+| Line sensors | 3× analog (A0–A2) | **5× via I²C TLA2528 ADC** | Same as V2 |
+| Distance | HC-SR04 ultrasonic | Same | Timed by the sensor coprocessor |
+| IR obstacle | 2× sensors | Same | **Modulated IR + phototransistor — works in sunlight** |
+| Light sensing | 2× LDR | Same | Same |
+| IR remote | Yes | Yes | Yes |
+| OLED display | 0.91″ I²C | Same | Same |
+| NeoPixels | Yes | Same | **+ 2 on top** |
+| Accelerometer | ✗ | **LIS2DH12 (new)** | Same |
+| Battery gauge | ✗ | **BQ27441 fuel gauge (new)** | Same |
+| Power | 18650 Li-ion + USB-C | Same + 3.3 V rail | **Separate logic and motor power paths**, bottom charging pads |
+| Expansion | Breadboard, GPIO | Same | **+ RoboBlocks 6-pin JST connector** |
 
-Both versions run on an **Arduino UNO-compatible** toolchain — no exotic setup required.
+All versions run on an **Arduino UNO-compatible** toolchain — no exotic setup required.
 
 ---
 
@@ -58,6 +61,25 @@ Both versions run on an **Arduino UNO-compatible** toolchain — no exotic setup
 | 08 | `08_CommandFusionHub_V2` | OLED dashboard + IR remote combined |
 | 09 | `09_HybridLineFollower_V2` | 5-sensor PD line follower using I²C ADC |
 | 10 | `10_ChromaTiltSphere_V2` | Bubble level on OLED + rainbow NeoPixels react to tilt |
+
+### V3 — RoboRover Core V3.1
+
+Needs the **RoboRoverCore3** library from `V3/libraries/`. Full guide: [`V3/README.md`](V3/README.md).
+
+| # | Sketch | What it does |
+|---|--------|--------------|
+| 01 | `01_LEDs_V3` | Colours on the eight RGB lights |
+| 02 | `02_Audio_V3` | Beeps and a short tune on the buzzer |
+| 03 | `03_MissionControlDashboard_V3` | Every sensor on the OLED; lights, beeps and driving on the remote |
+| 04 | `04_BasicMovement_V3` | A square by distance and angle, then weaves, spins and pivots by speed |
+| 05 | `05_PrecisionDistanceLock_V3` | Holds 10 cm from your hand, forwards and back |
+| 06 | `06_TacticalTeleoperation_V3` | Drive with the IR remote — held arrows drive dead straight |
+| 07 | `07_ObstacleDetection_V3` | Drives forwards, stops when something is in the way |
+| 09 | `09_HybridLineFollower_V3` | Fast PD line follower, tune Kp/Kd from the remote |
+| 10 | `10_ChromaTiltSphere_V3` | Tilt the rover to roll a ball around the screen |
+| 11 | `11_WiFiDashboard_V3` | Drive from your phone, program what its buttons do |
+| 12 | `12_UnboxingDemo_V3` | The program the rover ships with — IR remote and phone |
+| — | `WiFiModule_V3` | Wi-Fi module firmware (pre-installed; for reflashing) |
 
 ---
 
@@ -89,8 +111,16 @@ SparkFun BQ27441      (battery fuel gauge)
 ```
 > The RoboRover Core v2.1 support library wraps the TLA2528 ADC, accelerometer, and fuel gauge behind friendly one-liners if you'd rather skip the low-level stuff.
 
+**V3 — different set:** copy `V3/libraries/RoboRoverCore3` into your Arduino `libraries` folder, then install:
+```
+Adafruit NeoPixel
+IRremote
+U8g2                  (OLED)
+```
+> V3 sketches talk to the two coprocessors through RoboRoverCore3 — no Adafruit GFX/SSD1306 or SparkFun libraries needed.
+
 ### 4. Flash your first sketch
-Open `V1/01_SystemIgnition/01_SystemIgnition.ino`, hit **Upload**, and watch the robot boogie.
+Open `V1/01_SystemIgnition/01_SystemIgnition.ino` (or `V3/01_LEDs_V3/01_LEDs_V3.ino` on a V3.1 rover), hit **Upload**, and watch the robot boogie.
 
 ### 5. Interactive manual
 The **RoboRover Lab Explorer** is a web app with guided project walk-throughs, pinout references, and onboarding:
@@ -116,18 +146,24 @@ RoboRoverCore/
 │   ├── 09_LineFollower/
 │   ├── 10_LineFollowerEnhanced/
 │   └── 11_WirelessCommandBridge/
-└── V2/
-    ├── README.md      ← full v2.1 pinout & hardware reference
-    ├── 01_SystemIgnition_V2/
-    ├── 02_CyberAudioVisuals_V2/
-    ├── 03_MissionControlDashboard_V2/
-    ├── 04_ReflexiveAutonomy_V2/
-    ├── 05_PrecisionDistanceLock_V2/
-    ├── 06_PhototropicNavigation_V2/
-    ├── 07_TacticalTeleoperation_V2/
-    ├── 08_CommandFusionHub_V2/
-    ├── 09_HybridLineFollower_V2/
-    └── 10_ChromaTiltSphere_V2/
+├── V2/
+│   ├── README.md      ← full v2.1 pinout & hardware reference
+│   ├── 01_SystemIgnition_V2/
+│   ├── 02_CyberAudioVisuals_V2/
+│   ├── 03_MissionControlDashboard_V2/
+│   ├── 04_ReflexiveAutonomy_V2/
+│   ├── 05_PrecisionDistanceLock_V2/
+│   ├── 06_PhototropicNavigation_V2/
+│   ├── 07_TacticalTeleoperation_V2/
+│   ├── 08_CommandFusionHub_V2/
+│   ├── 09_HybridLineFollower_V2/
+│   └── 10_ChromaTiltSphere_V2/
+└── V3/
+    ├── README.md      ← V3.1 guide: what's new, projects, phone + IR controls, pinout
+    ├── 01_LEDs_V3/ … 12_UnboxingDemo_V3/
+    ├── WiFiModule_V3/ ← Wi-Fi module firmware
+    └── libraries/
+        └── RoboRoverCore3/
 ```
 
 Each sketch folder is self-contained — open the `.ino`, install the listed libraries, and upload. No monorepo magic needed.

@@ -1,0 +1,1220 @@
+<!doctype html>
+<!--
+  RoboRover controller UI (source).
+  After editing, run:  python tools/build_web.py   -> regenerates index_html.h
+  Keep // comments on their own lines (the build strips them).
+
+  Two ways to run:
+  - served by the rover (http://...)  -> local WebSocket to the ESP
+  - opened anywhere else (file://, https://, or ?remote) -> remote control
+    through an MQTT broker (WebSocket), topic <base>/rc
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0a0d12">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>RoboRover</title>
+<style>
+:root{--bg:#0a0d12;--pn:#121821;--pn2:#1a2330;--ln:#243041;--tx:#e6edf6;--mu:#7d8a9c;--ac:#4da3ff;--ok:#34d399;--wn:#fbbf24;--bd:#ef4444}
+*{box-sizing:border-box;margin:0}
+[hidden]{display:none!important}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{position:fixed;inset:0;display:flex;flex-direction:column;gap:8px;
+  padding:max(8px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
+  background:var(--bg);color:var(--tx);font:14px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;
+  touch-action:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-action:manipulation}
+a{color:inherit}
+svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* top bar */
+header{display:flex;align-items:center;gap:8px;height:36px;flex:none}
+.brand{font-weight:800;font-size:15px;letter-spacing:.02em;flex:1;min-width:0}
+.brand small{display:block;font-weight:500;font-size:11px;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip{display:flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:99px;background:var(--pn);border:1px solid var(--ln);font-size:12px;color:var(--mu);white-space:nowrap}
+.chip b{color:var(--tx);font-weight:600;font-variant-numeric:tabular-nums}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--bd)}
+.ok .dot{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.wn .dot{background:var(--wn)}
+/* front distance: the bar is the free space ahead, it turns red when close */
+.dist b{min-width:44px;text-align:right}
+.dbar{position:relative;width:clamp(56px,12vw,140px);height:8px;border-radius:4px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--ln);overflow:hidden}
+.dbar i{position:absolute;inset:0;border-radius:4px;transform-origin:left;transform:scaleX(0);
+  background:linear-gradient(90deg,var(--ok),var(--ac));transition:transform .25s ease-out}
+.dist.near{border-color:var(--bd);color:#fca5a5;animation:near .5s ease-in-out infinite alternate}
+.dist.near b{color:#fca5a5}
+.dist.near .dbar i{background:var(--bd)}
+.dist.stale .dbar i{opacity:.3}
+/* left/right obstacle sensors: two indicator lights, green = clear, red = something there */
+.ob{display:flex;gap:4px;padding-right:9px;margin-right:1px;border-right:1px solid var(--ln)}
+.ob i{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font:800 9px/1 system-ui,sans-serif;font-style:normal;
+  color:#052e1c;background:var(--ok);box-shadow:0 0 7px rgba(52,211,153,.5);transition:background .15s,color .15s,box-shadow .15s}
+.ob i.hit{color:#fff;background:var(--bd);box-shadow:0 0 12px rgba(239,68,68,.9);animation:hit .45s ease-in-out infinite alternate}
+@keyframes hit{to{box-shadow:0 0 3px rgba(239,68,68,.35)}}
+.dist.stale .ob i{background:var(--ln);color:var(--mu);box-shadow:none;animation:none}
+@keyframes near{to{background:rgba(239,68,68,.22);box-shadow:0 0 14px rgba(239,68,68,.55)}}
+/* speed and distance driven, from the wheel encoders: tap to start the distance from 0 */
+.spd b{min-width:52px;text-align:right}
+.spd span{color:var(--tx);font-variant-numeric:tabular-nums}
+.ib{position:relative;width:38px;height:32px;display:grid;place-items:center;border-radius:10px;background:var(--pn);border:1px solid var(--ln)}
+.ib.on{color:var(--ac);border-color:var(--ac)}
+.ib.new::after{content:"";position:absolute;top:4px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--bd)}
+
+main{flex:1;display:flex;gap:10px;min-height:0}
+body.sw main{flex-direction:row-reverse}
+
+/* drive pad */
+#pad,#pad *{touch-action:none}
+#pad{flex:1;position:relative;display:grid;place-items:center;border-radius:18px;border:1px solid var(--ln);
+  background:radial-gradient(circle,var(--pn2),var(--pn) 70%);overflow:hidden;transition:opacity .2s}
+body.off #pad{opacity:.45}
+/* forward-only dome: the knob rests on the middle of the flat edge.
+   Up = forwards, along the edge = spin on the spot. geom() sets --r and --k. */
+#base{--r:100px;--k:60px;position:relative;width:calc(var(--r)*2);height:var(--r);margin-bottom:calc(var(--k)/2);
+  border-radius:var(--r) var(--r) 0 0;border:2px solid var(--ln);border-bottom-color:var(--mu);transition:border-color .15s;
+  background:linear-gradient(var(--ln),var(--ln)) 50% 0/1px 100% no-repeat,
+  radial-gradient(circle var(--r) at 50% 100%,transparent 54%,var(--ln) 54.5%,transparent 55.5%),
+  radial-gradient(circle var(--r) at 50% 100%,rgba(77,163,255,.12),transparent 80%)}
+#pad.act #base{border-color:var(--ac);border-bottom-color:var(--ac)}
+/* straight lane: 15 degrees up the middle drive dead straight (LANE in the script) */
+#base::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:conic-gradient(from -7.5deg at 50% 100%,rgba(52,211,153,.5) 0 .5deg,rgba(52,211,153,.13) .5deg 14.5deg,rgba(52,211,153,.5) 14.5deg 15deg,transparent 15deg)}
+#pad.lane #base::before{background:conic-gradient(from -7.5deg at 50% 100%,rgba(52,211,153,.9) 0 .5deg,rgba(52,211,153,.32) .5deg 14.5deg,rgba(52,211,153,.9) 14.5deg 15deg,transparent 15deg)}
+.dl{position:absolute;font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--mu);pointer-events:none}
+.dl.up{top:9%;left:50%;transform:translateX(-50%)}
+.dl.sp{bottom:5px}
+/* reverse: same dome, still pushed up (downward swipes upset Android),
+   but up now means backwards. Amber = reversing. */
+#pad.rev #base{border-bottom-color:var(--wn);
+  background:linear-gradient(var(--ln),var(--ln)) 50% 0/1px 100% no-repeat,
+  radial-gradient(circle var(--r) at 50% 100%,transparent 54%,var(--ln) 54.5%,transparent 55.5%),
+  radial-gradient(circle var(--r) at 50% 100%,rgba(251,191,36,.14),transparent 80%)}
+#pad.rev.act #base{border-color:var(--wn)}
+#pad.rev .dl.up{color:var(--wn)}
+#pad.rev #knob{background:radial-gradient(circle at 35% 30%,#fde68a,#d97706 70%);box-shadow:0 8px 22px rgba(0,0,0,.5),0 0 0 7px rgba(251,191,36,.16)}
+#rv{position:absolute;top:10px;left:28px;z-index:2;display:flex;align-items:center;gap:6px;height:32px;padding:0 12px 0 9px;border-radius:99px;
+  background:var(--pn);border:1px solid var(--ln);font-size:12px;font-weight:700;color:var(--mu);transition:background .15s,color .15s,border-color .15s}
+#rv svg{width:17px;height:17px}
+#rv.on{background:var(--wn);border-color:var(--wn);color:#1c1300}
+#gd{position:absolute;top:10px;right:28px;z-index:2;display:flex;align-items:center;gap:6px;height:32px;padding:0 12px 0 9px;border-radius:99px;
+  background:var(--pn);border:1px solid var(--ln);font-size:12px;font-weight:700;color:var(--mu);transition:background .15s,color .15s,border-color .15s}
+#gd svg{width:17px;height:17px}
+#gd.on{background:var(--ok);border-color:var(--ok);color:#052e1c}
+/* obstacle guard holding the rover back: the dome's arc turns red */
+#pad.blocked #base{border-color:var(--bd);border-bottom-color:var(--mu);box-shadow:0 -6px 24px -8px rgba(239,68,68,.6)}
+#pad.blocked.act #base{border-bottom-color:var(--ac)}
+#knob{position:absolute;left:calc(50% - var(--k)/2);top:calc(100% - var(--k)/2);width:var(--k);height:var(--k);border-radius:50%;will-change:transform;transition:transform .16s ease-out;
+  background:radial-gradient(circle at 35% 30%,#7cc0ff,#2c7bd4 70%);box-shadow:0 8px 22px rgba(0,0,0,.5),0 0 0 7px rgba(77,163,255,.14)}
+#pad.act #knob{transition:none}
+.bar{position:absolute;top:16%;bottom:16%;width:6px;border-radius:3px;background:var(--ln);overflow:hidden}
+.bar i{position:absolute;left:0;right:0;top:50%;height:50%;background:var(--ac);transform-origin:top;transform:scaleY(0)}
+.bar b{position:absolute;left:0;right:0;top:50%;height:2px;margin-top:-1px;background:var(--mu)}
+#hint{position:absolute;left:0;right:0;bottom:10px;text-align:center;font-size:12px;color:var(--mu);white-space:pre;pointer-events:none;font-variant-numeric:tabular-nums}
+.bl{position:absolute;top:calc(16% - 18px);font-size:10px;font-weight:700;color:var(--mu)}
+
+/* side panel */
+aside{width:clamp(250px,38vw,400px);display:flex;flex-direction:column;gap:8px;min-height:0}
+.card{background:var(--pn);border:1px solid var(--ln);border-radius:16px;padding:9px 12px 4px}
+.lbl{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--mu);text-transform:uppercase}
+.lbl b{color:var(--tx);font-size:13px;letter-spacing:0}
+input[type=range]{-webkit-appearance:none;appearance:none;display:block;width:100%;height:30px;background:none}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:linear-gradient(var(--ac),var(--ac)) 0/var(--p,60%) 100% no-repeat,var(--ln)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;margin-top:-9px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.45)}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--ln)}
+input[type=range]::-moz-range-progress{height:6px;border-radius:3px;background:var(--ac)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border:0;border-radius:50%;background:#fff}
+.fn{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:8px;min-height:0}
+.fn button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:0;border-radius:14px;
+  background:var(--pn);border:1px solid var(--ln);font-size:12px;font-weight:600;transition:transform .08s,background .15s,border-color .15s}
+.fn button:active{background:var(--pn2);transform:scale(.95)}
+.fn button.on{color:var(--ac);border-color:var(--ac);background:rgba(77,163,255,.12)}
+.fn svg{width:22px;height:22px}
+/* piano: takes the place of the speed card and the buttons while open */
+body.pn aside .card,body.pn .fn{display:none}
+#pno{flex:1;display:flex;flex-direction:column;gap:8px;min-height:0}
+.ph{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mu)}
+#pnX{height:30px;padding:0 16px;border-radius:99px;background:var(--pn);border:1px solid var(--ln);font-size:12px;font-weight:700;color:var(--tx);letter-spacing:0;text-transform:none}
+#keys{position:relative;flex:1;display:flex;gap:3px;min-height:0}
+#keys,#keys *{touch-action:none}
+.wk{flex:1;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;border-radius:0 0 10px 10px;
+  background:linear-gradient(#f8fafc,#d5dde7);box-shadow:inset 0 -5px 0 rgba(0,0,0,.14);color:#64748b;font-size:11px;font-weight:800}
+.wk.on{background:linear-gradient(#d6e9ff,#8cc0ff);box-shadow:inset 0 -2px 0 rgba(0,0,0,.14)}
+.bk{position:absolute;top:0;z-index:1;width:calc(100% / 8 * .6);height:58%;margin-left:calc(100% / 8 * -.3);border-radius:0 0 7px 7px;
+  background:linear-gradient(#3b4452,#0b0f16);box-shadow:inset 0 -4px 0 rgba(255,255,255,.07)}
+.bk.on{background:linear-gradient(#6cb4ff,#1d4ed8)}
+.k{font-size:18px;font-weight:800;line-height:22px}
+#stop{flex:none;height:clamp(46px,16vh,64px);display:flex;align-items:center;justify-content:center;gap:8px;border-radius:16px;
+  background:var(--bd);color:#fff;font-size:16px;font-weight:800;letter-spacing:.14em;box-shadow:0 4px 18px rgba(239,68,68,.3);transition:transform .08s}
+#stop:active{transform:scale(.97)}
+
+/* drawer: console + network */
+#dr{position:fixed;top:0;right:0;bottom:0;z-index:5;width:min(440px,76vw);display:flex;flex-direction:column;gap:8px;
+  padding:max(10px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) 12px;
+  background:var(--pn);border-left:1px solid var(--ln);box-shadow:-10px 0 30px rgba(0,0,0,.45);transform:translateX(105%);transition:transform .2s}
+body.cn #dr{transform:none}
+.dh{display:flex;align-items:center;gap:8px}
+.seg{flex:1;display:flex;padding:3px;border-radius:12px;background:var(--bg);border:1px solid var(--ln)}
+.seg button{flex:1;height:30px;border-radius:9px;font-size:12px;font-weight:600;color:var(--mu)}
+.seg button.on{background:var(--ac);color:#04111f}
+.pg{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+/* keep overscroll inside the drawer: Android turns leftover swipe into a page reload */
+#dr,.pg,.nf,#log{overscroll-behavior:contain}
+.nf,#log{touch-action:pan-y}
+.nf input,.nf textarea{touch-action:auto}
+.tg{display:flex;gap:6px;flex-wrap:wrap}
+.tg button,.sb{display:inline-flex;align-items:center;justify-content:center;height:32px;padding:0 12px;border-radius:99px;border:1px solid var(--ln);font-size:12px;color:var(--mu);text-decoration:none;white-space:nowrap}
+.tg button.on{color:var(--ac);border-color:var(--ac)}
+#log{flex:1;overflow:auto;padding:8px;border-radius:10px;background:var(--bg);font:11px/1.45 ui-monospace,Menlo,Consolas,monospace;
+  white-space:pre-wrap;word-break:break-all;-webkit-user-select:text;user-select:text}
+#log .e{color:#fca5a5}
+#log .o{color:#7dd3fc}
+.r{display:flex;gap:8px;align-items:flex-end}
+.g{flex:1;min-width:0}
+.in{display:block;width:100%;min-width:0;height:36px;padding:0 10px;border-radius:10px;border:1px solid var(--ln);background:var(--bg);color:var(--tx);font:13px ui-monospace,Menlo,Consolas,monospace;-webkit-user-select:text;user-select:text}
+.in:focus{outline:none;border-color:var(--ac)}
+.btn{height:36px;padding:0 16px;border-radius:10px;background:var(--ac);color:#04111f;font-weight:700}
+.nf{overflow:auto;gap:10px;padding-bottom:6px}
+.nf label{display:block;font-size:11px;color:var(--mu)}
+.nf label .in{margin-top:3px}
+.nf h4{margin-top:4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mu)}
+.st{padding:9px 11px;border-radius:10px;background:var(--bg);font-size:12px;line-height:1.7;color:var(--mu);-webkit-user-select:text;user-select:text}
+.st b{color:var(--tx)}
+.nt{font-size:11px;line-height:1.4;color:var(--mu)}
+.nf .swt{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--tx)}
+.swt input{-webkit-appearance:none;appearance:none;position:relative;flex:none;width:38px;height:22px;border-radius:11px;background:var(--ln);transition:background .15s}
+.swt input::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .15s}
+.swt input:checked{background:var(--ac)}
+.swt input:checked::after{transform:translateX(16px)}
+body.rm .lo,body:not(.rm) .ro{display:none!important}
+
+/* portrait overlay */
+#rot{position:fixed;inset:0;z-index:9;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:var(--bg)}
+#rot svg{width:64px;height:64px;stroke-width:1.5;color:var(--ac);animation:rt 2.4s ease-in-out infinite}
+#rot h2{font-size:20px}
+#rot p{max-width:270px;font-size:14px;line-height:1.4;color:var(--mu)}
+@keyframes rt{0%,25%{transform:none}50%,85%{transform:rotate(-90deg)}100%{transform:none}}
+@media (orientation:portrait){#rot{display:flex}}
+
+@media (max-width:720px){.x{display:none}}
+@media (max-height:340px){header{height:30px}.chip,.ib{height:28px}.brand small{display:none}.fn button{font-size:11px;gap:3px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body class="off">
+<header>
+  <div class="brand">RoboRover<small id="ssid">connecting…</small></div>
+  <div class="chip dist stale" id="cD"><span class="ob"><i id="oL">L</i><i id="oR">R</i></span><svg class="x" viewBox="0 0 24 24"><path d="M5 9a9 9 0 0 1 0 6M9 7a13 13 0 0 1 0 10M13 5a17 17 0 0 1 0 14M19 4v16"/></svg><span class="dbar"><i id="dI"></i></span><b id="dV">—</b></div>
+  <button class="chip spd" id="cV" aria-label="Speed and distance driven. Tap to start the distance from 0"><svg class="x" viewBox="0 0 24 24"><path d="M4 17a8 8 0 1 1 16 0"/><path d="m12 17 4-5"/></svg><b id="vS">—</b><span id="vT"></span></button>
+  <div class="chip" id="cW"><i class="dot"></i><span class="x" id="wl">Wi-Fi</span><b id="rtt">offline</b></div>
+  <div class="chip" id="cN" hidden><i class="dot"></i><span class="x">Internet</span><b id="nv">—</b></div>
+  <div class="chip" id="cR"><i class="dot"></i><span class="x">Rover</span><b id="md">—</b></div>
+  <button class="ib" id="bN" aria-label="Network"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></button>
+  <button class="ib" id="bC" aria-label="Console"><svg viewBox="0 0 24 24"><path d="m5 17 5-5-5-5M13 18h6"/></svg></button>
+  <button class="ib" id="bF" aria-label="Fullscreen"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button>
+</header>
+
+<main>
+  <div id="pad">
+    <span class="bl" style="left:12px">L</span><span class="bl" style="right:12px">R</span>
+    <div class="bar" style="left:12px"><i id="gL"></i><b></b></div>
+    <div class="bar" style="right:12px"><i id="gR"></i><b></b></div>
+    <button id="gd" class="lo" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.5 3 8.4 7 10 4-1.6 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>Avoid</button>
+    <button id="rv" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M7 20V4M3 8l4-4 4 4M17 4v16M13 16l4 4 4-4"/></svg>Reverse</button>
+    <div id="base"><span class="dl up" id="dA">&#9650;</span><span class="dl sp" style="left:7%">&#9664; SPIN</span><span class="dl sp" style="right:7%">SPIN &#9654;</span><div id="knob"></div></div>
+    <div id="hint"></div>
+  </div>
+
+  <aside>
+    <div class="card">
+      <div class="lbl">Speed<b id="spV"></b></div>
+      <input id="sp" type="range" min="50" max="90" step="5" aria-label="Speed">
+    </div>
+    <div class="fn">
+      <button data-c="LIGHTMODE"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.8 10.6c.5.5.8 1.3.8 2.4h6c0-1.1.3-1.9.8-2.4A6 6 0 0 0 12 3z"/></svg>Lights</button>
+      <button data-c="DANCE" id="bD"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8M21 3v5h-5"/></svg>Dance</button>
+      <button data-c="BEEP"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4zM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9.5 9.5 0 0 1 0 13"/></svg>Beep</button>
+      <button data-c="PIANO"><svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>Piano</button>
+      <button data-c="G1"><span class="k">A</span>Custom A</button>
+      <button data-c="G2"><span class="k">B</span>Custom B</button>
+    </div>
+    <div id="pno" hidden>
+      <div class="ph"><span>Piano</span><button id="pnX">Done</button></div>
+      <div id="keys"></div>
+    </div>
+    <button id="stop"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/></svg>STOP</button>
+  </aside>
+</main>
+
+<div id="dr">
+  <div class="dh">
+    <div class="seg" id="tabs"><button data-t="log">Console</button><button data-t="net">Network</button></div>
+    <button class="ib" id="bX" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+
+  <div class="pg" id="pLog">
+    <div class="tg"><button id="tI">Invert steering</button><button id="tS">Swap sides</button><button id="tF">Auto fullscreen</button><button id="tT">Tilt drive</button><button id="tG">Gamepad</button><button id="tL">Clear log</button></div>
+    <div id="log"></div>
+    <form id="fm" class="r"><input id="cmd" class="in g" placeholder="e.g. SET debug 1" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn">Send</button></form>
+  </div>
+
+  <!-- rover-served: network settings -->
+  <form class="pg nf lo" id="pNet" autocomplete="off">
+    <div class="seg" id="nMode"><button type="button" data-m="0">Dashboard only</button><button type="button" data-m="1">Dashboard + Internet</button></div>
+    <div class="st" id="nSt">Waiting for the rover…</div>
+    <h4>Wi-Fi to join</h4>
+    <div class="r"><label class="g">Network name<input class="in" name="ssid" list="ssl" maxlength="32" autocapitalize="off" spellcheck="false"></label><button type="button" class="sb" id="bScan">Scan</button></div>
+    <datalist id="ssl"></datalist>
+    <label>Password<input class="in" name="pass" type="password" maxlength="63"></label>
+    <h4>Cloud data link (MQTT)</h4>
+    <div class="r"><label class="g">Broker<input class="in" name="host" maxlength="63" autocapitalize="off" spellcheck="false"></label><label style="width:86px">Port<input class="in" name="port" type="number" min="1" max="65535"></label></div>
+    <div class="r"><label class="g">User<input class="in" name="user" maxlength="63" autocapitalize="off" spellcheck="false"></label><label class="g">Password<input class="in" name="mpass" type="password" maxlength="95"></label></div>
+    <label>Topic<input class="in" name="base" maxlength="63" autocapitalize="off" spellcheck="false"></label>
+    <label class="swt"><input type="checkbox" name="tls">Secure connection (TLS, usually port 8883)</label>
+    <h4>Remote control</h4>
+    <label class="swt"><input type="checkbox" name="remote">Allow driving over the internet</label>
+    <label>Remote max speed: <b id="rcV"></b><input type="range" name="rcmax" min="10" max="100" step="5"></label>
+    <p class="nt">On a public broker anyone who knows the topic can reach the rover. For remote driving use your own broker with a password.</p>
+    <div class="r"><button class="btn g">Save &amp; apply</button><button type="button" class="sb" id="bFg">Forget Wi-Fi</button></div>
+    <a class="sb" href="/remote.html" download="roborover-remote.html">Download remote controller</a>
+  </form>
+
+  <!-- remote copy: broker connection -->
+  <form class="pg nf ro" id="pRem" autocomplete="off">
+    <div class="st" id="rSt"></div>
+    <label>Broker WebSocket URL<input class="in" name="url" autocapitalize="off" spellcheck="false"></label>
+    <div class="r"><label class="g">User<input class="in" name="user" autocapitalize="off" spellcheck="false"></label><label class="g">Password<input class="in" name="pass" type="password"></label></div>
+    <label>Rover topic<input class="in" name="base" placeholder="roborover/3f2a1c" autocapitalize="off" spellcheck="false"></label>
+    <p class="nt">The topic is shown in the rover's dashboard under Network. "Allow driving over the internet" must be on there, and the rover must use the same broker.</p>
+    <button class="btn">Connect</button>
+  </form>
+</div>
+
+<div id="rot">
+  <svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
+  <h2>Rotate to landscape</h2>
+  <p>The RoboRover controller is made for landscape. Turn your phone sideways.</p>
+  <button class="btn" id="bR" hidden>Go fullscreen landscape</button>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id), B = document.body, D = document, de = D.documentElement;
+const pad = $('pad'), base = $('base'), knob = $('knob'), hint = $('hint'), gL = $('gL'), gR = $('gR');
+const sp = $('sp'), spV = $('spV'), logEl = $('log'), cmd = $('cmd'), bC = $('bC'), bN = $('bN'), bF = $('bF'), bD = $('bD');
+const pNet = $('pNet'), pRem = $('pRem'), NF = pNet.elements, RF = pRem.elements;
+
+// Tuning
+// DZ: joystick dead zone, TURN: steering strength (1 = spin at full speed)
+const DZ = .08, TURN = .8, SEND_MS = 50, KEEP_MS = 250, HB_MS = 700, HB_DEAD = 2500, ROVER_DEAD = 2500;
+const MODES = ['teleop', 'light follow', 'dance'];
+const hover = matchMedia('(hover:hover)').matches;
+// Served by the rover = local; any other origin = remote control over MQTT
+const REMOTE = location.protocol !== 'http:' || /[?&]remote\b/.test(location.search);
+B.classList.toggle('rm', REMOTE);
+
+const store = (k, v) => { try { localStorage[k] = JSON.stringify(v); } catch (_) {} };
+const load = (k, d) => { try { return Object.assign(d, JSON.parse(localStorage[k] || '{}')); } catch (_) { return d; } };
+const esc = s => String(s).replace(/[&<>"]/g, c => '&#' + c.charCodeAt(0) + ';');
+const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (_) {} };
+
+// ---- settings (per device) ----
+const cfg = load('rr', { sp: 70, inv: 0, sw: 0 });
+const save = () => store('rr', cfg);
+const rc = load('rrR', { url: 'wss://broker.hivemq.com:8884/mqtt', user: '', pass: '', base: '' });
+const qs = new URLSearchParams(location.search);
+if (qs.get('b')) rc.base = qs.get('b');
+if (qs.get('u')) rc.url = qs.get('u');
+
+// ---- console ----
+function log(t, c) {
+  const pin = logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 24;
+  const d = D.createElement('div');
+  if (c) d.className = c;
+  d.textContent = new Date().toTimeString().slice(0, 8) + '  ' + t;
+  logEl.append(d);
+  while (logEl.childElementCount > 150) logEl.firstChild.remove();
+  if (pin) logEl.scrollTop = 1e9;
+  if (c === 'e' && !(B.classList.contains('cn') && tab === 'log')) bC.classList.add('new');
+}
+
+// ---- MQTT over WebSocket (remote mode; QoS 0) ----
+function mqttWs(url, user, pass, on) {
+  const te = new TextEncoder(), td = new TextDecoder(), w = new WebSocket(url, ['mqtt']);
+  let rx = new Uint8Array(0), ok = false, pid = 0, pinger = 0;
+  w.binaryType = 'arraybuffer';
+  const str = s => { const b = te.encode(s); return [b.length >> 8, b.length & 255, ...b]; };
+  const pkt = (h, body) => {
+    if (w.readyState !== 1) return false;
+    const len = [];
+    let n = body.length;
+    do { const d = n % 128; n = Math.floor(n / 128); len.push(n ? d | 128 : d); } while (n);
+    w.send(new Uint8Array([h, ...len, ...body]));
+    return true;
+  };
+  const packet = (h, p) => {
+    const t = h >> 4;
+    if (t === 2) {
+      if (p[1] === 0) { ok = true; on.up(); } else { on.fail(p[1]); w.close(); }
+    } else if (t === 3) {
+      const tl = p[0] << 8 | p[1], s = 2 + tl + ((h >> 1) & 3 ? 2 : 0);
+      on.msg(td.decode(p.subarray(2, 2 + tl)), td.decode(p.subarray(s)));
+    }
+  };
+  w.onopen = () => {
+    const f = 2 | (user ? 128 : 0) | (pass ? 64 : 0);
+    const id = 'rr-web-' + Math.random().toString(36).slice(2, 10);
+    pkt(16, [...str('MQTT'), 4, f, 0, 30, ...str(id), ...(user ? str(user) : []), ...(pass ? str(pass) : [])]);
+    pinger = setInterval(() => pkt(192, []), 20000);
+  };
+  w.onmessage = e => {
+    const d = new Uint8Array(e.data), b = new Uint8Array(rx.length + d.length);
+    b.set(rx); b.set(d, rx.length);
+    let i = 0;
+    for (;;) {
+      let j = i + 1, n = 0, m = 1, c = 128;
+      while (c & 128 && j < b.length) { c = b[j++]; n += (c & 127) * m; m *= 128; }
+      if (c & 128 || j + n > b.length) break;
+      packet(b[i], b.subarray(j, j + n));
+      i = j + n;
+    }
+    rx = b.slice(i);
+  };
+  w.onclose = () => { clearInterval(pinger); on.close(); };
+  return {
+    pub: (t, s) => ok && pkt(48, [...str(t), ...te.encode(s)]),
+    sub: t => { pid = pid % 65535 + 1; return pkt(130, [pid >> 8, pid & 255, ...str(t), 0]); },
+    connecting: () => !ok && w.readyState < 2,
+    kill: () => { clearInterval(pinger); w.onclose = w.onmessage = w.onopen = null; try { w.close(); } catch (_) {} },
+  };
+}
+
+// ---- link to the rover ----
+let link = null, up = false, retry = 500, openAt = 0, hbAck = 0, roverAt = 0, roverOn = null, mode = '', timer = 0;
+
+function send(s) { return !!(up && link && link.send(s)); }
+
+function connect() {
+  clearTimeout(timer);
+  openAt = Date.now();
+  link = REMOTE ? remoteLink() : localLink();
+}
+
+function localLink() {
+  const w = new WebSocket('ws://' + (location.hostname || '192.168.4.1') + ':81/');
+  w.onopen = opened;
+  w.onclose = closed;
+  w.onmessage = e => onMsg(String(e.data));
+  return {
+    send: s => { if (w.readyState !== 1) return false; w.send(s); return true; },
+    connecting: () => w.readyState === 0,
+    kill: () => { w.onclose = w.onmessage = w.onopen = null; try { w.close(); } catch (_) {} },
+  };
+}
+
+function remoteLink() {
+  if (!rc.base) { openDrawer('net'); stat(); return null; }
+  const out = rc.base + '/out', st = rc.base + '/status';
+  const m = mqttWs(rc.url, rc.user, rc.pass, {
+    up: () => { m.sub(out); m.sub(st); opened(); },
+    msg: (t, v) => { if (t === st) { roverOn = v === 'online'; stat(); } else if (t === out) onMsg(v); },
+    close: closed,
+    fail: c => log('broker refused the connection' + (c === 4 || c === 5 ? ': check user and password' : ' (code ' + c + ')'), 'e'),
+  });
+  return { send: s => m.pub(rc.base + '/rc', s), connecting: m.connecting, kill: m.kill };
+}
+
+function opened() {
+  up = true; retry = 500; hbAck = Date.now();
+  B.classList.remove('off');
+  log(REMOTE ? 'broker connected' : 'connected', 'o');
+  stat();
+}
+
+function closed() {
+  if (up) log('disconnected', 'e');
+  up = false; roverAt = 0; link = null;
+  B.classList.add('off');
+  release();
+  stat();
+  timer = setTimeout(connect, retry);
+  retry = Math.min(retry * 1.6, REMOTE ? 10000 : 3000);
+}
+
+// Abandon a link that went silent (faster than waiting for the browser to notice)
+function drop() {
+  if (link) link.kill();
+  closed();
+}
+
+// ---- front distance (rover sends "D <cm> <L><R>", -1 = nothing in range, L/R 1 = obstacle) ----
+// DIST_NEAR: closer than this turns red, DIST_FULL: a full bar
+const DIST_NEAR = 15, DIST_FULL = 100, DIST_STALE = 1500;
+let distAt = 0, distNear = false;
+
+function showDist(cm) {
+  if (isNaN(cm)) return;
+  distAt = Date.now();
+  // Nothing in range, or far enough that it does not matter: "clear"
+  const clear = cm < 0 || cm > DIST_FULL, near = !clear && cm < DIST_NEAR;
+  $('dV').textContent = clear ? 'clear' : cm + ' cm';
+  $('dI').style.transform = `scaleX(${clear ? 1 : Math.min(cm, DIST_FULL) / DIST_FULL})`;
+  $('cD').classList.toggle('near', near);
+  $('cD').classList.remove('stale');
+  if (near && !distNear) buzz([60, 40, 60]);
+  distNear = near;
+}
+
+// Left/right obstacle sensors: light turns red while something is there
+let sideL = false, sideR = false;
+function showSides(l, r) {
+  $('oL').classList.toggle('hit', l);
+  $('oR').classList.toggle('hit', r);
+  if ((l && !sideL) || (r && !sideR)) buzz(30);
+  sideL = l; sideR = r;
+}
+
+// ---- speed and distance driven (rover sends "V <cm/s> <cm>" from its wheel encoders) ----
+// Tap the chip to start the distance from 0 again.
+const TRIP_STALE = 3000;
+let tripAt = 0;
+function showTrip(cms, cm) {
+  if (isNaN(cms) || isNaN(cm)) return;
+  tripAt = Date.now();
+  $('vS').textContent = (cms < 0 ? '−' : '') + Math.abs(cms) + ' cm/s';
+  $('vT').textContent = (cm / 100).toFixed(cm < 10000 ? 2 : 0) + ' m';
+}
+$('cV').onclick = () => {
+  if (send('ODO 0')) { buzz(12); log('distance driven: back to 0', 'o'); } else log('not connected', 'e');
+};
+
+function onMsg(m) {
+  const k = m[0], v = m.slice(2);
+  if (k === 'p') {
+    hbAck = Date.now();
+    $('rtt').textContent = Math.max(0, Math.round(performance.now() - v)) + ' ms';
+    return;
+  }
+  if (k === 'S') {
+    if (v[0] === 'D' && v[1] === ' ') {
+      const [cm, sides, guard] = v.slice(2).split(' ');
+      showDist(+cm);
+      if (sides && sides.length === 2) showSides(sides[0] === '1', sides[1] === '1');
+      if (guard === '0' || guard === '1') guardSeen(guard === '1');
+      updBlocked();
+      return;
+    }
+    if (v[0] === 'V' && v[1] === ' ') {
+      const [cms, cm] = v.slice(2).split(' ');
+      showTrip(+cms, +cm);
+      return;
+    }
+    if (v[0] === 'T' && v[1] === ' ') {
+      const n = +v.slice(2);
+      roverAt = Date.now();
+      mode = MODES[n] || v.slice(2);
+      bD.classList.toggle('on', n === 2);
+      stat();
+    } else log(v, v.startsWith('ERR') ? 'e' : '');
+    return;
+  }
+  if (k === 'H') { $('ssid').textContent = v; return; }
+  if (k === 'N') { try { net = JSON.parse(v); } catch (_) { return; } renderNet(); return; }
+  if (k === 'R') {
+    const ok = v.startsWith('OK');
+    log('network: ' + v, ok ? 'o' : 'e');
+    if (ok) { netDirty = false; NF.pass.value = NF.mpass.value = ''; renderNet(); }
+    else $('nSt').insertAdjacentHTML('afterbegin', `<b style="color:#fca5a5">${esc(v)}</b><br>`);
+    return;
+  }
+  if (k === 'W') {
+    try {
+      const a = JSON.parse(v);
+      $('ssl').innerHTML = a.map(s => `<option value="${esc(s)}">`).join('');
+      log(`found ${a.length} Wi-Fi networks: ${a.join(', ')}`, 'o');
+      NF.ssid.focus();
+    } catch (_) {}
+    $('bScan').textContent = 'Scan';
+    return;
+  }
+  log(m);
+}
+
+let tick = 0;
+setInterval(() => {
+  const now = Date.now();
+  if (up) {
+    const late = now - hbAck > HB_DEAD;
+    if (late && !REMOTE) { log('link timeout', 'e'); drop(); }
+    else {
+      if (late) $('rtt').textContent = 'no reply';
+      send('P ' + Math.round(performance.now()));
+      if (!REMOTE && tab === 'net' && B.classList.contains('cn') && ++tick % 7 === 0) send('NET GET');
+    }
+  } else if (link && link.connecting() && now - openAt > 6000) drop();
+  stat();
+}, HB_MS);
+
+function stat() {
+  const now = Date.now(), fresh = up && now - roverAt < ROVER_DEAD;
+  // No distance for a while: grey the bar out instead of showing an old value
+  if (now - distAt > DIST_STALE && !$('cD').classList.contains('stale')) {
+    $('cD').classList.add('stale');
+    $('cD').classList.remove('near');
+    $('dV').textContent = '—';
+    distNear = false;
+    showSides(false, false);
+    updBlocked();
+  }
+  if (tripAt && now - tripAt > TRIP_STALE) {
+    tripAt = 0;
+    $('vS').textContent = '—';
+    $('vT').textContent = '';
+  }
+  $('cW').className = 'chip' + (up ? (REMOTE && now - hbAck > HB_DEAD ? ' wn' : ' ok') : '');
+  if (!up) $('rtt').textContent = REMOTE && !rc.base ? 'not set' : 'offline';
+  $('cR').className = 'chip' + (fresh ? ' ok' : up ? ' wn' : '');
+  $('md').textContent = fresh ? mode : !up ? '—' : roverOn === false ? 'offline' : 'no data';
+  if (REMOTE) {
+    $('rSt').innerHTML = !rc.base ? 'Enter the rover topic to connect.'
+      : `<span class="${up ? 'ok' : ''}"><i class="dot"></i></span> <b>Broker</b> ${up ? 'connected' : 'connecting…'}<br>` +
+        `<span class="${fresh ? 'ok' : up ? 'wn' : ''}"><i class="dot"></i></span> <b>Rover</b> ${fresh ? 'online · ' + esc(mode) : roverOn === false ? 'offline' : up ? 'no reply yet' : '—'}`;
+  }
+  dirty();
+}
+
+// ---- network settings (rover-served page) ----
+let net = null, netDirty = false, nMode = 0;
+const dotRow = (cls, name, text) => `<span class="${cls}"><i class="dot"></i></span> <b>${name}</b> ${text}`;
+
+function renderNet() {
+  const j = net;
+  if (!j) return;
+  const on = j.mode === 1, wifiUp = j.wifi === 'up';
+  $('cN').hidden = !on;
+  if (on) {
+    const [cls, txt] = j.mqtt === 'up' ? ['ok', 'online'] : wifiUp ? ['wn', j.host ? 'no cloud' : 'Wi-Fi only']
+      : j.wifi === 'connecting' ? ['wn', 'connecting'] : ['', 'offline'];
+    $('cN').className = 'chip ' + cls;
+    $('nv').textContent = txt;
+  }
+  let h;
+  if (!on) h = 'Dashboard only: the rover is not connected to the internet.';
+  else if (!j.ssid) h = 'Choose a Wi-Fi network below.';
+  else {
+    h = dotRow(wifiUp ? 'ok' : j.wifi === 'connecting' ? 'wn' : '', 'Wi-Fi',
+      wifiUp ? `${esc(j.ssid)} · ${j.rssi} dBm`
+      : j.wifi === 'connecting' ? `connecting to ${esc(j.ssid)}…` : `${esc(j.why || 'not connected')}, retrying soon`);
+    if (wifiUp) h += `<br>On that network open <b>http://${esc(j.mdns)}.local</b> or <b>http://${esc(j.ip)}</b>`;
+    h += '<br>' + dotRow(j.mqtt === 'up' ? 'ok' : j.mqtt === 'connecting' ? 'wn' : '', 'Cloud',
+      !j.host ? 'no broker set'
+      : j.mqtt === 'up' ? `online · topic <b>${esc(j.base)}</b>`
+      : j.mqtt === 'connecting' ? 'connecting…'
+      : wifiUp ? esc(j.merr || 'offline') + ' – retrying' : 'waiting for Wi-Fi');
+    if (j.mqtt === 'up') h += '<br>' + dotRow(j.remote ? 'ok' : '', 'Remote', j.remote ? `on · max ${j.rcmax}%` : 'off');
+  }
+  $('nSt').innerHTML = h;
+  if (netDirty) return;
+  setMode(j.mode);
+  NF.ssid.value = j.ssid; NF.host.value = j.host; NF.port.value = j.port; NF.user.value = j.user; NF.base.value = j.base;
+  NF.tls.checked = !!j.tls; NF.remote.checked = !!j.remote; NF.rcmax.value = j.rcmax;
+  NF.pass.placeholder = j.pass ? 'saved – leave empty to keep' : '';
+  NF.mpass.placeholder = j.mpass ? 'saved – leave empty to keep' : '';
+  rcView();
+}
+
+function setMode(m) {
+  nMode = +m;
+  $('nMode').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.m === nMode));
+}
+function rcView() {
+  $('rcV').textContent = NF.rcmax.value + '%';
+  NF.rcmax.style.setProperty('--p', (NF.rcmax.value - 10) / .9 + '%');
+}
+
+$('nMode').onclick = e => { const m = e.target.dataset.m; if (m != null) { setMode(m); netDirty = true; } };
+pNet.oninput = () => { netDirty = true; rcView(); };
+$('bScan').onclick = () => { if (send('NET SCAN')) $('bScan').textContent = 'Scanning…'; };
+$('bFg').onclick = () => {
+  if (confirm('Forget the Wi-Fi network and switch to dashboard only?')) { netDirty = false; send('NET FORGET'); }
+};
+pNet.onsubmit = e => {
+  e.preventDefault();
+  if (!up) { log('not connected', 'e'); return; }
+  const v = n => NF[n].value.trim();
+  if (net && net.mode === 1 && nMode === 0 && location.hostname !== '192.168.4.1' &&
+      !confirm('This page reaches the rover through your Wi-Fi. After switching to dashboard only, join the RoboRover network instead. Continue?')) return;
+  const L = ['NET BEGIN', 'NET MODE ' + nMode, 'NET SSID ' + v('ssid'), 'NET BROKER ' + v('host'), 'NET PORT ' + (v('port') || 1883),
+    'NET TLS ' + +NF.tls.checked, 'NET USER ' + v('user'), 'NET BASE ' + v('base'), 'NET REMOTE ' + +NF.remote.checked, 'NET RCMAX ' + NF.rcmax.value];
+  if (NF.pass.value) L.push('NET PASS ' + NF.pass.value);
+  if (NF.mpass.value) L.push('NET MPASS ' + NF.mpass.value);
+  L.push('NET SAVE');
+  L.forEach(send);
+};
+
+// ---- remote connection form ----
+function fillRemote() { RF.url.value = rc.url; RF.user.value = rc.user; RF.pass.value = rc.pass; RF.base.value = rc.base; }
+pRem.onsubmit = e => {
+  e.preventDefault();
+  rc.url = RF.url.value.trim(); rc.user = RF.user.value.trim(); rc.pass = RF.pass.value; rc.base = RF.base.value.trim().replace(/\/+$/, '');
+  store('rrR', rc);
+  $('ssid').textContent = 'Remote · ' + (rc.base || 'not set');
+  release();
+  if (link) link.kill();
+  up = false; link = null; retry = 500; roverOn = null; roverAt = 0;
+  B.classList.add('off');
+  connect();
+  toggleDrawer(false);
+};
+
+// ---- drive ----
+let pid = null, keys = {}, kx = 0, ky = 0, cx = 0, cy = 0, T = 72, dragDown = false, rev = false;
+let lastL = 0, lastR = 0, lastTx = 0, raf = 0, note = '', noteAt = 0;
+
+// gpAct: the gamepad's stick is out of centre, gpBack: pulled back (drives backwards)
+let gpAct = false, gpBack = false;
+const keyOn = () => { for (const _ in keys) return true; return false; };
+const active = () => pid !== null || keyOn() || gpAct;
+
+// Knob position (kx,ky: -1..1, screen axes) -> motor PWM [L, R]
+// Straight lane: within LANE/2 degrees of the centre line the rover drives
+// dead straight. Outside it, steering starts from zero at the lane's edge (no
+// jump) and still reaches a full spin at the flat edge.
+const LANE = 15;
+let inLane = false;
+
+function mix() {
+  const m = Math.hypot(kx, ky);
+  inLane = false;
+  if (m < DZ) return [0, 0];
+  const f = (m - DZ) / (1 - DZ), g = f * (.4 + .6 * f);
+  // Angle from straight up, in degrees: 0 = ahead, +-90 = along the flat edge
+  let a = Math.atan2(kx, -ky) * 180 / Math.PI;
+  const h = LANE / 2;
+  inLane = Math.abs(a) <= h;
+  a = inLane ? 0 : Math.sign(a) * (Math.abs(a) - h) * 90 / (90 - h);
+  const ux = Math.sin(a * Math.PI / 180), uy = Math.cos(a * Math.PI / 180);
+  // In reverse, pushing up drives backwards (a gamepad stick pulled back does too)
+  const y = uy * g * (rev !== (gpAct && gpBack) ? -1 : 1), x = ux * g * TURN * (cfg.inv ? -1 : 1);
+  // Rover wiring: pushing right must slow the L channel (matches original firmware)
+  const l = y - x, r = y + x, n = Math.max(1, Math.abs(l), Math.abs(r)), s = 2.55 * cfg.sp / n;
+  return [Math.round(l * s), Math.round(r * s)];
+}
+
+// Joystick line with a check number, so the rover can throw away a line
+// that its serial link misheard ("M 229 229" arriving as "M 29 229").
+const mLine = (l, r) => 'M ' + l + ' ' + r + ' ' + ((l * 7 + r * 13 + 5100) % 97);
+
+function drive() {
+  if (!active()) return;
+  const [l, r] = mix(), now = Date.now();
+  // Send on change; repeat non-zero commands to feed the rover's dead-man timer
+  if ((l !== lastL || r !== lastR || ((l || r) && now - lastTx >= KEEP_MS)) && send(mLine(l, r))) {
+    lastL = l; lastR = r; lastTx = now;
+  }
+}
+setInterval(() => { gpPoll(); drive(); }, SEND_MS);
+
+function zero() {
+  lastL = lastR = 0;
+  send(mLine(0, 0));
+  setTimeout(() => { if (!active()) send(mLine(0, 0)); }, 120);
+}
+
+function release() {
+  pid = null; keys = {}; kx = ky = 0; gpAct = gpBack = false;
+  pad.classList.remove('act');
+  if (lastL || lastR) zero();
+  dirty();
+}
+
+function estop() {
+  pid = null; keys = {}; kx = ky = 0; lastL = lastR = 0; gpAct = gpBack = false; gpLatch = true;
+  pad.classList.remove('act');
+  send('STOP');
+  setTimeout(() => send('STOP'), 120);
+  if (toneHz) notesOff();
+  buzz(40);
+  log('STOP', 'o');
+  dirty();
+}
+
+// Reverse toggle: pushing up then drives backwards. Always stops first, so the rover never
+// changes direction while moving.
+const rvBtn = $('rv');
+function setRev(on) {
+  release();
+  rev = on;
+  pad.classList.toggle('rev', rev);
+  pad.classList.toggle('blocked', blocked && !rev);
+  rvBtn.classList.toggle('on', rev);
+  rvBtn.setAttribute('aria-pressed', rev);
+  $('dA').innerHTML = rev ? '&#9660; BACK' : '&#9650;';
+  buzz(15);
+  dirty();
+}
+// The button sits on the pad: keep its touch from starting a drag
+rvBtn.addEventListener('pointerdown', e => e.stopPropagation());
+rvBtn.onclick = () => setRev(!rev);
+
+// Obstacle guard ("Avoid"): the rover refuses to drive forwards into
+// something - an IR sensor sees it, or the ultrasonic reads under 15 cm.
+// Reverse and spin still work. The rover holds the setting (its IR remote can
+// switch it too); this button asks for a change and shows what the rover has.
+const gdBtn = $('gd');
+let guardOn = false, guardSentAt = 0, blocked = false;
+
+function showGuard(on) {
+  gdBtn.classList.toggle('on', on);
+  gdBtn.setAttribute('aria-pressed', on);
+}
+function setGuard(on) {
+  guardSentAt = Date.now();
+  if (!send('SAFE ' + (on ? 1 : 0))) { log('not connected', 'e'); return; }
+  guardOn = on;
+  showGuard(on);
+  log('obstacle guard ' + (on ? 'on' : 'off'), 'o');
+  buzz(15);
+  updBlocked();
+}
+// The rover's report wins, except just after a click (it may not have it yet)
+function guardSeen(on) {
+  if (Date.now() - guardSentAt < 1500) return;
+  guardOn = on;
+  showGuard(on);
+}
+function updBlocked() {
+  blocked = guardOn && (distNear || sideL || sideR);
+  pad.classList.toggle('blocked', blocked && !rev);
+  dirty();
+}
+gdBtn.addEventListener('pointerdown', e => e.stopPropagation());
+gdBtn.onclick = () => setGuard(!guardOn);
+
+const dirty = () => { if (!raf) raf = requestAnimationFrame(paint); };
+function paint() {
+  raf = 0;
+  knob.style.transform = `translate3d(${(kx * T).toFixed(1)}px,${(ky * T).toFixed(1)}px,0)`;
+  const [l, r] = mix();
+  pad.classList.toggle('lane', inLane && active());
+  gL.style.transform = `scaleY(${-l / 255})`;
+  gR.style.transform = `scaleY(${-r / 255})`;
+  const bk = blocked && !rev;
+  hint.textContent = active() ? (bk ? 'BLOCKED   ' : '') + `L ${String(l).padStart(4)}     R ${String(r).padStart(4)}`
+    : bk ? 'Obstacle ahead  ·  forward is blocked, reverse or spin'
+    : note && Date.now() - noteAt < 10000 ? note
+    : !up ? (!REMOTE ? 'Connecting to rover…' : rc.base ? 'Connecting to the broker…' : 'Set the rover topic under Network')
+    : tiltOn ? 'TILT  ·  hold the pad and tilt the phone' + (rev ? ' (reverse)' : '')
+    : rev ? 'REVERSE  ·  push up to drive backwards'
+    : gpOn ? 'Drag to drive  ·  gamepad: left stick, B = stop'
+    : hover ? 'Drag to drive  ·  WASD / arrows  ·  Space = stop' : 'Drag to drive';
+}
+
+function geom() {
+  const r = pad.getBoundingClientRect();
+  // The dome is s wide and s/2 tall; the knob (0.3 s) hangs half below its edge
+  const s = Math.max(100, Math.floor(Math.min(r.width - 70, (r.height - 56) / .65) * .92));
+  base.style.setProperty('--r', s / 2 + 'px');
+  base.style.setProperty('--k', Math.round(s * .3) + 'px');
+  T = s * .35;
+  dirty();
+}
+
+function move(e) {
+  let x = (e.clientX - cx) / T, y = (e.clientY - cy) / T;
+  dragDown = y > .2;
+  // Half pad: below the flat edge counts as on it (spin on the spot)
+  if (y > 0) y = 0;
+  const m = Math.hypot(x, y);
+  if (m > 1) { x /= m; y /= m; }
+  kx = x; ky = y;
+  dirty();
+}
+
+pad.addEventListener('pointerdown', e => {
+  if (pid !== null || e.button > 0) return;
+  pid = e.pointerId;
+  try { pad.setPointerCapture(pid); } catch (_) {}
+  keys = {};
+  const b = base.getBoundingClientRect();
+  cx = b.left + b.width / 2; cy = b.bottom;
+  pad.classList.add('act');
+  gpAct = gpBack = false;
+  // Tilt drive: the finger only holds the pad, the phone's tilt steers.
+  // The tilt right now counts as level.
+  if (tiltOn) {
+    tilt0 = tiltX === null ? null : [tiltX, tiltY];
+    if (!tilt0) log('tilt: no readings from the phone yet', 'e');
+  } else move(e);
+  drive();
+});
+// Listen on the window, not the pad: downward drags often leave the pad, and
+// pointer capture is not granted by every browser.
+addEventListener('pointermove', e => { if (e.pointerId === pid && !tiltOn) move(e); });
+addEventListener('pointerup', e => { if (e.pointerId === pid) release(); });
+pad.addEventListener('lostpointercapture', e => { if (e.pointerId === pid && e.pointerType !== 'mouse') release(); });
+addEventListener('pointercancel', e => {
+  if (e.pointerId !== pid) return;
+  // The browser took the gesture over (page swipe, captive-portal popup, …)
+  const downward = dragDown;
+  release();
+  log('the browser cancelled the drag', 'e');
+  if (downward) {
+    note = 'Downward swipe taken over by the browser.\nOpen http://192.168.4.1 in Chrome or Safari.';
+    noteAt = Date.now();
+  }
+  dirty();
+});
+
+// Keyboard: WASD / arrows drive, Space / Esc stop
+const KM = { ArrowUp: 'u', KeyW: 'u', ArrowDown: 'd', KeyS: 'd', ArrowLeft: 'l', KeyA: 'l', ArrowRight: 'r', KeyD: 'r' };
+function keyStick() {
+  if (!keyOn()) { release(); return; }
+  let x = (keys.r ? 1 : 0) - (keys.l ? 1 : 0), y = keys.u ? -1 : 0;
+  const m = Math.hypot(x, y);
+  if (m > 1) { x /= m; y /= m; }
+  kx = x; ky = y;
+  pad.classList.add('act');
+  dirty();
+  drive();
+}
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') { if (e.key === 'Escape') e.target.blur(); return; }
+  if (D.activeElement && D.activeElement.tagName === 'BUTTON') D.activeElement.blur();
+  if (e.code === 'Space' || e.code === 'Escape') { e.preventDefault(); estop(); toggleDrawer(false); return; }
+  const k = KM[e.code];
+  if (!k || pid !== null || e.repeat) return;
+  e.preventDefault();
+  keys[k] = 1;
+  keyStick();
+});
+addEventListener('keyup', e => {
+  const k = KM[e.code];
+  if (!k || !keys[k]) return;
+  delete keys[k];
+  keyStick();
+});
+
+// ---- tilt drive (toggle under Console): hold the pad and tilt the phone ----
+// Where the phone is when the finger goes down counts as level; TILT_FULL
+// degrees from there is full speed. Tilting back does nothing, like the pad:
+// use Reverse. Browsers only give tilt readings to https pages, which the
+// rover cannot serve - so it works in the internet remote opened from an
+// https address, and on the rover's own page only after the flag below.
+const TILT_FULL = 25;
+let tiltOn = false, tiltX = null, tiltY = 0, tilt0 = null;
+
+function tiltRead(e) {
+  if (e.beta == null || e.gamma == null) return;
+  const a = ((screen.orientation ? screen.orientation.angle : +window.orientation || 0) % 360 + 360) % 360;
+  // Screen directions: x = right side down, y = top edge down (forwards).
+  // beta turns about the phone's short axis, gamma about its long one.
+  if (a === 90) { tiltX = e.beta; tiltY = e.gamma; }
+  else if (a === 270) { tiltX = -e.beta; tiltY = -e.gamma; }
+  else { tiltX = e.gamma; tiltY = -e.beta; }
+  if (!tiltOn || pid === null || !tilt0) return;
+  const w = d => ((d + 540) % 360) - 180;
+  let x = w(tiltX - tilt0[0]) / TILT_FULL, y = -w(tiltY - tilt0[1]) / TILT_FULL;
+  if (y > 0) y = 0;
+  const m = Math.hypot(x, y);
+  if (m > 1) { x /= m; y /= m; }
+  // Smoothed a little: a hand is never quite still
+  kx += (x - kx) * .5;
+  ky += (y - ky) * .5;
+  dirty();
+}
+
+async function setTilt(on) {
+  if (on) {
+    if (!window.DeviceOrientationEvent) { log('tilt: this browser has no tilt sensor', 'e'); return; }
+    if (!window.isSecureContext) {
+      log('tilt: browsers only allow it on https pages. It works in the internet remote. On this page, in Android Chrome: ' +
+        'open chrome://flags, find "Insecure origins treated as secure", add http://192.168.4.1, enable, relaunch.', 'e');
+      return;
+    }
+    try {
+      // iPhone: asks first, and only from a tap
+      if (typeof DeviceOrientationEvent.requestPermission === 'function' &&
+          await DeviceOrientationEvent.requestPermission() !== 'granted') throw 0;
+    } catch (_) { log('tilt: permission refused', 'e'); return; }
+    addEventListener('deviceorientation', tiltRead);
+    setTimeout(() => { if (tiltOn && tiltX === null) log('tilt: no readings from this phone', 'e'); }, 1500);
+  } else removeEventListener('deviceorientation', tiltRead);
+  release();
+  tiltOn = on;
+  tT.classList.toggle('on', on);
+  log(on ? 'tilt drive on: hold the pad and tilt the phone' : 'tilt drive off', 'o');
+  buzz(15);
+}
+
+// ---- gamepad (toggle under Console) ----
+// Left stick drives like the pad, pulled back it drives backwards.
+// B = STOP, A = beep, X = lights, Y = dance. The browser only shows a
+// gamepad after one of its buttons has been pressed. After STOP the stick
+// must go back to the middle before it drives again.
+const GP_DZ = .15;
+let gpOn = false, gpLatch = false, gpPrev = [];
+
+function gpPoll() {
+  if (!gpOn || D.hidden || pid !== null || keyOn()) return;
+  let p = null;
+  try { for (const g of navigator.getGamepads()) if (g && g.connected) { p = g; break; } } catch (_) {}
+  if (!p) { if (gpAct) release(); return; }
+  // A button acts once, when it goes down
+  const btn = p.buttons.map(b => b.pressed), was = gpPrev, hit = i => btn[i] && !was[i];
+  gpPrev = btn;
+  if (hit(1)) { estop(); return; }
+  if (hit(0)) call('BEEP');
+  if (hit(2)) call('LIGHTMODE');
+  if (hit(3)) call('DANCE');
+  const x = p.axes[0] || 0, y = p.axes[1] || 0, m = Math.hypot(x, y);
+  if (m < GP_DZ) { gpLatch = false; if (gpAct) release(); return; }
+  if (gpLatch) return;
+  // Rescale past the dead zone, so driving starts gently
+  const s = Math.min(1, (m - GP_DZ) / (1 - GP_DZ)) / m;
+  gpAct = true;
+  gpBack = y > 0;
+  kx = x * s;
+  ky = -Math.abs(y * s);
+  pad.classList.add('act');
+  dirty();
+}
+addEventListener('gamepadconnected', e => { if (gpOn) log('gamepad connected: ' + e.gamepad.id, 'o'); });
+addEventListener('gamepaddisconnected', () => { if (gpAct) release(); });
+
+// Safety: stop when the page loses focus, is hidden, or turns portrait
+D.addEventListener('visibilitychange', () => { if (D.hidden) release(); });
+addEventListener('blur', release);
+addEventListener('pagehide', release);
+D.addEventListener('contextmenu', e => { if (e.target.tagName !== 'INPUT') e.preventDefault(); });
+
+// Android turns leftover swipes into page reloads (pull down) and back/forward
+// navigation (sideways). Swallow every drag no list here can actually use.
+let tX = 0, tY = 0;
+D.addEventListener('touchstart', e => {
+  const t = e.touches[0];
+  tX = t ? t.clientX : 0;
+  tY = t ? t.clientY : 0;
+}, { passive: true });
+D.addEventListener('touchmove', e => {
+  if (e.touches.length !== 1 || e.target.type === 'range') return;  // sliders need the default
+  const dx = e.touches[0].clientX - tX, dy = e.touches[0].clientY - tY;
+  const s = [logEl, pNet, pRem].find(el => el.contains(e.target));
+  // nothing scrolls sideways, and a list at its end has nothing left to give
+  if (!s || Math.abs(dx) > Math.abs(dy)) { e.preventDefault(); return; }
+  const room = s.scrollHeight - s.clientHeight;
+  if ((dy > 0 && s.scrollTop <= 0) || (dy < 0 && s.scrollTop >= room - 1)) e.preventDefault();
+}, { passive: false });
+const pq = matchMedia('(orientation:portrait)');
+const onOri = () => { if (pq.matches) release(); geom(); };
+pq.addEventListener ? pq.addEventListener('change', onOri) : pq.addListener(onOri);
+addEventListener('resize', () => requestAnimationFrame(geom));
+
+// ---- controls ----
+// Speed 50..90 %: below half the motors cannot move the rover, and full
+// power is too fast to steer. A value saved by an older page is brought
+// into range.
+function setSp(v) {
+  v = Math.min(90, Math.max(50, +v || 70));
+  cfg.sp = v;
+  sp.value = v;
+  spV.textContent = v + '%';
+  sp.style.setProperty('--p', (v - 50) * 2.5 + '%');
+  dirty();
+}
+sp.oninput = () => setSp(sp.value);
+sp.onchange = save;
+
+function call(id) {
+  const c = 'CALL ' + id;
+  if (send(c)) { buzz(12); log(c, 'o'); } else log('not connected', 'e');
+}
+D.querySelectorAll('[data-c]').forEach(b => b.onclick = () => {
+  // Piano opens the keyboard (over the internet it plays the rover's tune instead)
+  if (b.dataset.c === 'PIANO' && !REMOTE) { setPiano(!B.classList.contains('pn')); return; }
+  call(b.dataset.c);
+});
+$('stop').onclick = estop;
+
+// ---- piano: one octave, C5..C6, played on the rover's buzzer ----
+// A held key sends "NOTE <Hz>" (again every 0.4 s: the rover ends a note
+// after a second by itself, so a lost "stop" cannot leave it beeping).
+// "NOTE 0" stops. Slide a finger across the keys to change note.
+const WHITE = [['C', 523], ['D', 587], ['E', 659], ['F', 698], ['G', 784], ['A', 880], ['B', 988], ['C', 1047]];
+const BLACK = [[1, 554], [2, 622], [4, 740], [5, 831], [6, 932]];   // [white keys to its left, Hz]
+const keysEl = $('keys'), pianoBtn = D.querySelector('[data-c="PIANO"]'), held = new Map();
+let toneHz = 0, toneAt = 0;
+
+WHITE.forEach(([name, hz]) => {
+  const k = D.createElement('div');
+  k.className = 'wk'; k.dataset.hz = hz; k.textContent = name;
+  keysEl.append(k);
+});
+BLACK.forEach(([i, hz]) => {
+  const k = D.createElement('div');
+  k.className = 'bk'; k.dataset.hz = hz; k.style.left = `calc(100% / 8 * ${i})`;
+  keysEl.append(k);
+});
+
+function playNote(hz) {
+  toneHz = hz; toneAt = Date.now();
+  send('NOTE ' + hz);
+}
+// The newest finger decides the note; every held key lights up
+function updNotes() {
+  keysEl.querySelectorAll('.on').forEach(k => k.classList.remove('on'));
+  let last = null;
+  held.forEach(k => { k.classList.add('on'); last = k; });
+  const hz = last ? +last.dataset.hz : 0;
+  if (hz !== toneHz) playNote(hz);
+}
+function notesOff() { held.clear(); updNotes(); }
+const keyAt = (x, y) => { const el = D.elementFromPoint(x, y); return el && el.parentNode === keysEl ? el : null; };
+
+keysEl.addEventListener('pointerdown', e => {
+  const k = keyAt(e.clientX, e.clientY);
+  if (!k) return;
+  try { keysEl.setPointerCapture(e.pointerId); } catch (_) {}
+  held.set(e.pointerId, k);
+  updNotes();
+  buzz(8);
+});
+keysEl.addEventListener('pointermove', e => {
+  if (!held.has(e.pointerId)) return;
+  const k = keyAt(e.clientX, e.clientY);
+  if (k && k !== held.get(e.pointerId)) { held.set(e.pointerId, k); updNotes(); }
+});
+const keyUp = e => { if (held.delete(e.pointerId)) updNotes(); };
+keysEl.addEventListener('pointerup', keyUp);
+keysEl.addEventListener('pointercancel', keyUp);
+setInterval(() => { if (toneHz && Date.now() - toneAt > 400) playNote(toneHz); }, 100);
+D.addEventListener('visibilitychange', () => { if (D.hidden) notesOff(); });
+
+function setPiano(on) {
+  B.classList.toggle('pn', on);
+  $('pno').hidden = !on;
+  pianoBtn.classList.toggle('on', on);
+  if (!on) notesOff();
+}
+$('pnX').onclick = () => setPiano(false);
+
+// ---- drawer ----
+let tab = 'log';
+function showTab(t) {
+  tab = t;
+  $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  $('pLog').hidden = t !== 'log';
+  (REMOTE ? pRem : pNet).hidden = t !== 'net';
+  bC.classList.toggle('on', t === 'log' && B.classList.contains('cn'));
+  bN.classList.toggle('on', t === 'net' && B.classList.contains('cn'));
+  if (t === 'log') { bC.classList.remove('new'); logEl.scrollTop = 1e9; }
+  else if (REMOTE) fillRemote();
+  else send('NET GET');
+}
+function toggleDrawer(on) { B.classList.toggle('cn', on); showTab(tab); }
+function openDrawer(t) { B.classList.add('cn'); showTab(t); }
+const tabBtn = t => () => (B.classList.contains('cn') && tab === t ? toggleDrawer(false) : openDrawer(t));
+bC.onclick = tabBtn('log');
+bN.onclick = tabBtn('net');
+$('bX').onclick = () => toggleDrawer(false);
+$('tabs').onclick = e => { const t = e.target.dataset.t; if (t) showTab(t); };
+$('tL').onclick = () => { logEl.textContent = ''; };
+const tI = $('tI'), tS = $('tS');
+const tF = $('tF'), tT = $('tT'), tG = $('tG');
+const applyCfg = () => {
+  tI.classList.toggle('on', !!cfg.inv);
+  tS.classList.toggle('on', !!cfg.sw);
+  tF.classList.toggle('on', cfg.afs !== 0);
+  tG.classList.toggle('on', !!cfg.gp);
+  B.classList.toggle('sw', !!cfg.sw);
+  gpOn = !!cfg.gp;
+};
+tT.onclick = () => setTilt(!tiltOn);
+tG.onclick = () => {
+  cfg.gp = cfg.gp ? 0 : 1;
+  release();
+  applyCfg();
+  save();
+  log(cfg.gp ? 'gamepad on: press one of its buttons so the browser finds it' : 'gamepad off', 'o');
+  dirty();
+};
+tF.onclick = () => { cfg.afs = cfg.afs === 0 ? 1 : 0; applyCfg(); save(); if (cfg.afs && !fsEl()) fullscreen(); };
+tI.onclick = () => { cfg.inv ^= 1; applyCfg(); save(); };
+tS.onclick = () => { cfg.sw ^= 1; applyCfg(); save(); requestAnimationFrame(geom); };
+$('fm').onsubmit = e => {
+  e.preventDefault();
+  const v = cmd.value.trim();
+  if (!v) return;
+  if (send(v)) { log('> ' + v, 'o'); cmd.value = ''; } else log('not connected', 'e');
+};
+
+// ---- fullscreen / orientation lock ----
+const fsReq = de.requestFullscreen || de.webkitRequestFullscreen;
+const fsEl = () => D.fullscreenElement || D.webkitFullscreenElement;
+async function fullscreen() {
+  try {
+    if (fsEl()) { (D.exitFullscreen || D.webkitExitFullscreen).call(D); return; }
+    await fsReq.call(de, { navigationUI: 'hide' });
+    try { await screen.orientation.lock('landscape'); } catch (_) {}
+  } catch (_) {}
+}
+if (fsReq) {
+  bF.onclick = () => { fsByButton = !!fsEl(); fullscreen(); };
+  $('bR').hidden = false;
+  $('bR').onclick = fullscreen;
+  const fsc = () => { bF.classList.toggle('on', !!fsEl()); setTimeout(geom, 150); };
+  D.addEventListener('fullscreenchange', fsc);
+  D.addEventListener('webkitfullscreenchange', fsc);
+} else { bF.hidden = tF.hidden = true; }
+
+// Android's back gesture is just history.back(), so keep an entry of our own
+// and put it back each time. Nothing else can take the controller away.
+try {
+  history.pushState({ rr: 1 }, '', location.href);
+  addEventListener('popstate', () => {
+    try { history.pushState({ rr: 1 }, '', location.href); } catch (_) {}
+    release();
+    log('back gesture ignored', 'e');
+  });
+} catch (_) {}
+
+// On phones, enter fullscreen when the first touch ends: only fullscreen keeps
+// Android's edge swipes off the controls. Turn it off under Console.
+// ...and stay fullscreen: any touch goes back into it after a swipe or the
+// system took it away - unless it was left on purpose with the fullscreen button.
+let fsByButton = false;
+if (fsReq && !hover) {
+  addEventListener('pointerup', e => {
+    if (e.pointerType === 'mouse' || cfg.afs === 0 || fsByButton || fsEl()) return;
+    fullscreen();
+  }, true);
+}
+
+// ---- boot ----
+if (REMOTE) {
+  $('wl').textContent = 'Cloud';
+  $('ssid').textContent = 'Remote · ' + (rc.base || 'not set');
+}
+// One-time nudge on phones: only fullscreen keeps Android's edge swipes
+// (back / reload) away from the controls
+if (!hover && !cfg.tip) {
+  note = 'Tap ⛶ for fullscreen — it keeps phone swipes from reloading the page';
+  noteAt = Date.now();
+  cfg.tip = 1;
+}
+setSp(cfg.sp);
+applyCfg();
+rcView();
+showTab('log');
+geom();
+stat();
+connect();
+})();
+</script>
+</body>
+</html>
