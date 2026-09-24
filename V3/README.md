@@ -7,7 +7,7 @@ only has to decide what the robot does.
 
 This folder has everything you need to program it:
 
-- **12 example projects** (`01_…_V3` to `12_…_V3`), from blinking lights to
+- **11 example projects** (`01_…_V3` to `12_…_V3`), from blinking lights to
   a PID line follower and driving from your phone
 - **`libraries/RoboRoverCore3`**, the Arduino library every V3 sketch uses
 - **`WiFiModule_V3`**, the firmware of the Wi-Fi module, in case it ever
@@ -81,7 +81,6 @@ Open `01_LEDs_V3/01_LEDs_V3.ino`, upload, and work your way up the list.
 | 05 | [PrecisionDistanceLock](05_PrecisionDistanceLock_V3/) | Drives forwards and backwards to stay 10 cm from your hand | **yes** |
 | 06 | [TacticalTeleoperation](06_TacticalTeleoperation_V3/) | Drive with the IR remote, change the lights | **yes** |
 | 07 | [ObstacleDetection](07_ObstacleDetection_V3/) | Drives forwards, stops when something is in the way | **yes** |
-| 08 | CommandFusionHub | Wi-Fi project — coming soon | — |
 | 09 | [HybridLineFollower](09_HybridLineFollower_V3/) | Fast PD line following; tune Kp and Kd with the remote arrows | **yes** |
 | 10 | [ChromaTiltSphere](10_ChromaTiltSphere_V3/) | Tilt the rover to roll a ball around the screen | no |
 | 11 | [WiFiDashboard](11_WiFiDashboard_V3/) | Drive from your phone over Wi-Fi, and program what its buttons do | only from the phone |
