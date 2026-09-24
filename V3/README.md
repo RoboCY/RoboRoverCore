@@ -28,7 +28,7 @@ This folder has everything you need to program it:
 | **Twin DRV8837 motor drivers** | One driver right at each motor, 6 V boost supply, 220 µF per motor | Full N20 motor performance and less electrical noise |
 | **Dual-path power** | Separate power for the electronics and the motors | Heavy motor loads don't disturb the logic side |
 | **Four-layer PCB** | Cleaner signal and power distribution | — |
-| **Top NeoPixels** | Two extra LEDs on top of the rover | Status you can see from above |
+| **Front NeoPixels** | Two extra LEDs on the bottom, at the front of the rover | Light effects at the front |
 | **RoboBlocks connector** | 6-pin JST connector | Plug in RoboBlocks modules |
 | **Bottom charging pads** | For the future stackable charging station | — |
 | **Acrylic cover** | Protects the electronics, keeps them visible | — |

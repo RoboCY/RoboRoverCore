@@ -25,7 +25,7 @@ This repo holds all the example sketches — organised by hardware version — s
 | Light sensing | 2× LDR | Same | Same |
 | IR remote | Yes | Yes | Yes |
 | OLED display | 0.91″ I²C | Same | Same |
-| NeoPixels | Yes | Same | **+ 2 on top** |
+| NeoPixels | Yes | Same | **+ 2 at the bottom front** |
 | Accelerometer | ✗ | **LIS2DH12 (new)** | Same |
 | Battery gauge | ✗ | **BQ27441 fuel gauge (new)** | Same |
 | Power | 18650 Li-ion + USB-C | Same + 3.3 V rail | **Separate logic and motor power paths**, bottom charging pads |
