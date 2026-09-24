@@ -6,7 +6,7 @@
 //                                distance ahead, speed, last thing said
 //   Always:                      battery charge in the top right corner
 //
-// 11_WiFiDashboard_V3 has the same file without the IR remote parts.
+// 08_CommandFusionHub_V3 has the same file without the IR remote parts.
 //
 // Text positions are in dots: x from the left (0..127), y from the top (0..31).
 // Each line of text is 8 dots high, so there is room for 4 lines.

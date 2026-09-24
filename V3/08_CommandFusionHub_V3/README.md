@@ -1,6 +1,7 @@
-# 11_WiFiDashboard_V3
+# 08_CommandFusionHub_V3
 
-Drive the rover from a phone over WiFi, and program what the phone's buttons do.
+The WiFi dashboard: drive the rover from a phone over WiFi, and program what
+the phone's buttons do.
 
 This project runs on two chips, so it has two sketches:
 
@@ -10,7 +11,7 @@ This project runs on two chips, so it has two sketches:
 | [Kypruino_Rover](Kypruino_Rover/) | The Kypruino | **You** - this is the one to play with |
 
 The WiFi module's sketch has its own folder because
-[12_UnboxingDemo_V3](../12_UnboxingDemo_V3/) uses the same one.
+[11_UnboxingDemo_V3](../11_UnboxingDemo_V3/) uses the same one.
 
 ## Getting started
 

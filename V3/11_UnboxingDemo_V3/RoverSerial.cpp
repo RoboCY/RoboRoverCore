@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 The latest version of this library can always be found at
 http://arduiniana.org.
 
-Modified for RoboRover 12_UnboxingDemo_V3 (renamed RoverSerial):
+Modified for RoboRover 11_UnboxingDemo_V3 (renamed RoverSerial):
 the original defines the handlers for ALL pin-change interrupt groups, which
 collides with the IR receiver (TinyIRReceiver on A3 needs PCINT1). This copy
 only handles PCINT0 - pins D8..D13, which holds the WiFi receive pin D12 -

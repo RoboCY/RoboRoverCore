@@ -17,7 +17,7 @@
 #include <RoboRoverCore3.h>
 
 // The serial class for the WiFi module. A sketch can define WIFI_SERIAL_CLASS
-// before including this file to use another one (12_UnboxingDemo does, so
+// before including this file to use another one (11_UnboxingDemo does, so
 // the IR remote can share the pin-change interrupts).
 #ifndef WIFI_SERIAL_CLASS
 #include <SoftwareSerial.h>

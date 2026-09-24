@@ -75,10 +75,10 @@ Needs the **RoboRoverCore3** library from `V3/libraries/`. Full guide: [`V3/READ
 | 05 | `05_PrecisionDistanceLock_V3` | Holds 10 cm from your hand, forwards and back |
 | 06 | `06_TacticalTeleoperation_V3` | Drive with the IR remote — held arrows drive dead straight |
 | 07 | `07_ObstacleDetection_V3` | Drives forwards, stops when something is in the way |
+| 08 | `08_CommandFusionHub_V3` | Wi-Fi dashboard: drive from your phone, program what its buttons do |
 | 09 | `09_HybridLineFollower_V3` | Fast PD line follower, tune Kp/Kd from the remote |
 | 10 | `10_ChromaTiltSphere_V3` | Tilt the rover to roll a ball around the screen |
-| 11 | `11_WiFiDashboard_V3` | Drive from your phone, program what its buttons do |
-| 12 | `12_UnboxingDemo_V3` | The program the rover ships with — IR remote and phone |
+| 11 | `11_UnboxingDemo_V3` | The program the rover ships with — IR remote and phone |
 | — | `WiFiModule_V3` | Wi-Fi module firmware (pre-installed; for reflashing) |
 
 ---
@@ -160,7 +160,7 @@ RoboRoverCore/
 │   └── 10_ChromaTiltSphere_V2/
 └── V3/
     ├── README.md      ← V3.1 guide: what's new, projects, phone + IR controls, pinout
-    ├── 01_LEDs_V3/ … 12_UnboxingDemo_V3/
+    ├── 01_LEDs_V3/ … 11_UnboxingDemo_V3/
     ├── WiFiModule_V3/ ← Wi-Fi module firmware
     └── libraries/
         └── RoboRoverCore3/

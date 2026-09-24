@@ -3,7 +3,7 @@
   -----------------------------------------------------
   The firmware of the rover's WiFi module. It comes already programmed;
   reflash it only if it is blank or was overwritten - see README.md here.
-  11_WiFiDashboard_V3 and 12_UnboxingDemo_V3 are the Kypruino side.
+  08_CommandFusionHub_V3 and 11_UnboxingDemo_V3 are the Kypruino side.
 
   - Open WiFi access point "RoboRover-XXXX" at 192.168.4.1, always on
   - No sign-in pop-up: the phones' "is there internet?" checks (Android,

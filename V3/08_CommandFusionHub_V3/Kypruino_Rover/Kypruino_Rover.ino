@@ -1,5 +1,5 @@
-// 11_WiFiDashboard_V3 - drive the rover from your phone, and decide what the
-// buttons on the phone do.
+// 08_CommandFusionHub_V3 - the WiFi dashboard: drive the rover from your
+// phone, and decide what the buttons on the phone do.
 // The rover moves: give it floor space, or put it on blocks.
 //
 // How to use it

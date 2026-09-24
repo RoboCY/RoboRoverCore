@@ -7,7 +7,7 @@ only has to decide what the robot does.
 
 This folder has everything you need to program it:
 
-- **11 example projects** (`01_…_V3` to `12_…_V3`), from blinking lights to
+- **11 example projects** (`01_…_V3` to `11_…_V3`), from blinking lights to
   a PID line follower and driving from your phone
 - **`libraries/RoboRoverCore3`**, the Arduino library every V3 sketch uses
 - **`WiFiModule_V3`**, the firmware of the Wi-Fi module, in case it ever
@@ -81,10 +81,10 @@ Open `01_LEDs_V3/01_LEDs_V3.ino`, upload, and work your way up the list.
 | 05 | [PrecisionDistanceLock](05_PrecisionDistanceLock_V3/) | Drives forwards and backwards to stay 10 cm from your hand | **yes** |
 | 06 | [TacticalTeleoperation](06_TacticalTeleoperation_V3/) | Drive with the IR remote, change the lights | **yes** |
 | 07 | [ObstacleDetection](07_ObstacleDetection_V3/) | Drives forwards, stops when something is in the way | **yes** |
+| 08 | [CommandFusionHub](08_CommandFusionHub_V3/) | The Wi-Fi dashboard: drive from your phone, and program what its buttons do | only from the phone |
 | 09 | [HybridLineFollower](09_HybridLineFollower_V3/) | Fast PD line following; tune Kp and Kd with the remote arrows | **yes** |
 | 10 | [ChromaTiltSphere](10_ChromaTiltSphere_V3/) | Tilt the rover to roll a ball around the screen | no |
-| 11 | [WiFiDashboard](11_WiFiDashboard_V3/) | Drive from your phone over Wi-Fi, and program what its buttons do | only from the phone |
-| 12 | [UnboxingDemo](12_UnboxingDemo_V3/) | The program the rover ships with: drive with the IR remote or a phone | only when you drive it |
+| 11 | [UnboxingDemo](11_UnboxingDemo_V3/) | The program the rover ships with: drive with the IR remote or a phone | only when you drive it |
 
 The numbers match the V1 and V2 projects, so the same lesson has the same
 number on every rover.
@@ -98,7 +98,7 @@ LEDs, IRRemoteDriving and TurnCalibration.
 
 ## Out of the box: the Unboxing Demo
 
-Every rover ships running [12_UnboxingDemo_V3](12_UnboxingDemo_V3/). Switch it
+Every rover ships running [11_UnboxingDemo_V3](11_UnboxingDemo_V3/). Switch it
 on and drive it straight away — with the IR remote, a phone, or both at once.
 Both can do the same things.
 
@@ -144,7 +144,7 @@ While Dance or Tune is running, any button stops it. The rover's screen shows
 what it is doing, the distance ahead, the speed and the battery.
 
 **Want to change what the buttons do?** Open
-[11_WiFiDashboard_V3](11_WiFiDashboard_V3/) — its `Kypruino_Rover.ino` is the
+[08_CommandFusionHub_V3](08_CommandFusionHub_V3/) — its `Kypruino_Rover.ino` is the
 same program without the IR remote, written for you to edit.
 
 ---
@@ -256,8 +256,8 @@ through pins.
 ```
 V3/
 ├── README.md                      ← you are here
-├── 01_LEDs_V3/ … 12_UnboxingDemo_V3/   example projects
-├── 11_WiFiDashboard_V3/
+├── 01_LEDs_V3/ … 11_UnboxingDemo_V3/   example projects
+├── 08_CommandFusionHub_V3/
 │   └── Kypruino_Rover/            the Kypruino side — edit this one
 ├── WiFiModule_V3/                 Wi-Fi module firmware (ESP-01S), comes pre-installed
 └── libraries/

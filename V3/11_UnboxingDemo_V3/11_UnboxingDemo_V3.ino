@@ -1,4 +1,4 @@
-// 12_UnboxingDemo_V3 - the program the rover ships with. Switch it on and
+// 11_UnboxingDemo_V3 - the program the rover ships with. Switch it on and
 // drive it straight away: with the IR remote from the box, or from a phone
 // over WiFi. Both work at the same time, and do the same things.
 // The rover moves: give it floor space.
@@ -26,7 +26,7 @@
 // remote is used: the motors, what the rover is doing, the distance ahead,
 // the speed, the battery and the last thing it said.
 //
-// This sketch is 11_WiFiDashboard_V3's Kypruino_Rover plus the IR remote.
+// This sketch is 08_CommandFusionHub_V3's Kypruino_Rover plus the IR remote.
 // WiFiLink.h is the same file as there; Screen.h adds the remote.
 // RoverSerial is Arduino's SoftwareSerial, trimmed so the IR receiver can
 // share the chip's pin-change interrupts (see the note in RoverSerial.cpp).

@@ -3,8 +3,8 @@
 The firmware of the rover's WiFi module (ESP-01S). It makes the
 `RoboRover-XXXX` WiFi network and serves the phone controller at
 `http://192.168.4.1`. It is not a project of its own: the Kypruino side is
-[11_WiFiDashboard_V3](../11_WiFiDashboard_V3/) or
-[12_UnboxingDemo_V3](../12_UnboxingDemo_V3/), and both use this firmware.
+[08_CommandFusionHub_V3](../08_CommandFusionHub_V3/) or
+[11_UnboxingDemo_V3](../11_UnboxingDemo_V3/), and both use this firmware.
 
 The module comes already programmed. **Reflash it only if it is blank or was
 overwritten** - for example when the phone finds no `RoboRover-XXXX` network,
